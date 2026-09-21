@@ -1,0 +1,6 @@
+OPEN CITY MERGED BUILD MANIFEST
+
+Base continuity: Steps 1–25
+Final integration: Final Build systems
+
+The numbered step sequence is complete. Future work should be testing, bug fixing, optimization, and optional expansions—not rebuilding the game from zero.

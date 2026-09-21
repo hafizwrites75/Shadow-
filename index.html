@@ -1,0 +1,1299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Open City Prototype — Step 25</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#111;font-family:Arial,sans-serif}
+#game{display:block;width:100%;height:100%;touch-action:none}
+#hint{position:fixed;left:10px;top:10px;padding:8px 11px;border-radius:10px;background:#0009;color:#fff;font-size:13px;z-index:5}
+#wanted{position:fixed;right:18px;top:14px;padding:8px 12px;border-radius:10px;background:#000b;color:#fff;font-weight:700;z-index:7}
+#weapon{position:fixed;left:10px;bottom:150px;padding:7px 10px;border-radius:9px;background:#0009;color:#fff;font-size:13px;z-index:7}
+#health{position:fixed;left:10px;bottom:112px;padding:7px 10px;border-radius:9px;background:#0009;color:#fff;font-size:13px;z-index:7}
+#weatherBtn{position:fixed;left:68px;top:125px;width:48px;height:42px;border:0;border-radius:10px;background:#222;color:#fff;z-index:8;font-size:18px}
+#saveBtn{position:fixed;left:12px;top:125px;width:48px;height:42px;border:0;border-radius:10px;background:#222;color:#fff;z-index:8;font-size:18px}
+#interact{position:fixed;right:110px;bottom:155px;width:58px;height:58px;border-radius:50%;border:0;background:#6b5cff;color:white;font-weight:800;z-index:8}
+#fire{position:fixed;right:22px;bottom:155px;width:72px;height:72px;border:0;border-radius:50%;background:#fffde;color:#111;font-weight:800;z-index:8}
+#joy{position:fixed;left:22px;bottom:24px;width:112px;height:112px;border-radius:50%;background:#fff2;border:1px solid #fff5;z-index:5;touch-action:none}
+#stick{position:absolute;left:31px;top:31px;width:50px;height:50px;border-radius:50%;background:#fff8}
+#look{position:fixed;right:0;top:0;width:58%;height:72%;z-index:4;touch-action:none}
+#carBtn{position:fixed;right:18px;bottom:24px;z-index:7;border:0;border-radius:14px;padding:13px 16px;background:#ffffffdd;color:#111;font-weight:700}
+#drive{display:none;position:fixed;right:18px;bottom:86px;z-index:7;grid-template-columns:52px 52px 52px;gap:8px}
+#drive button{width:52px;height:52px;border:0;border-radius:13px;background:#ffffffdd;font-size:20px;font-weight:700}
+#gas{grid-column:2}
+</style>
+<style>
+#save22{position:fixed;right:14px;top:58px;z-index:9999;display:flex;gap:6px;flex-wrap:wrap;max-width:190px;justify-content:flex-end}
+#save22 button{background:#111b;color:#fff;border:1px solid #ffffff55;border-radius:8px;padding:7px 9px;font-weight:700;backdrop-filter:blur(5px)}
+#save22 button:hover{background:#ffffff22}
+#saveStatus22{width:100%;text-align:right;color:#fff;font-size:12px;text-shadow:0 1px 3px #000}
+</style>
+<div id="save22"><button id="saveBtn22">💾 Save</button><button id="loadBtn22">📂 Load</button><button id="resetBtn22">↩ Reset</button><div id="saveStatus22">Save system ready</div></div>
+
+<style>
+#inventory25{position:fixed;left:10px;top:285px;z-index:30;background:#000b;color:#fff;padding:9px 11px;border-radius:11px;font-size:12px;line-height:1.55;min-width:150px;backdrop-filter:blur(5px)}
+#invToast25{position:fixed;left:50%;bottom:125px;transform:translateX(-50%);z-index:80;background:#111e;color:#fff;padding:10px 14px;border-radius:12px;display:none;font-weight:700}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hint">STEP 25 • Inventory & Consumables</div>
+<div id="wanted">WANTED: ☆☆☆☆☆</div>
+<div id="weapon">🔫 Pistol • Ammo: 12</div>
+<div id="health">❤️ Health: 100 • Armor: 0</div>
+<div id="houseInfo">🏠 گھر: باہر</div>
+<div id="mission">🎯 کوئی مشن فعال نہیں</div>
+<div id="money">💵 $500</div>
+<div id="shopInfo">🏪 Shop: دور</div>
+<div id="vehicleInfo">🚗 Vehicle: باہر</div>
+<div id="worldInfo">🌊 Water: محفوظ</div>
+<div id="wantedInfo">🚨 Wanted: 0/5</div>
+<div id="npcInfo">👥 City NPCs: 0</div>
+<div id="dialogue">💬 شہر میں مشن تلاش کریں</div>
+<div id="buildingInfo">🏢 عمارت: باہر</div>
+<div id="timeInfo">🕒 Day 08:00</div>
+<div id="systemInfo">💾 Auto-save: ON</div>
+<div id="inventory25">🎒 Inventory<br>💊 Medkit: 2<br>🛡️ Armor Plate: 2<br>🔫 Ammo Pack: 2</div>
+<div id="invToast25"></div>
+<button id="fire">FIRE</button><button id="interact">E</button>
+<button id="saveBtn">💾</button><button id="weatherBtn">☀️</button>
+<div id="joy"><div id="stick"></div></div>
+<div id="look"></div>
+<button id="carBtn">🚗 Enter</button>
+<div id="drive" aria-hidden="true">
+  <button id="left">◀</button><button id="brake">■</button><button id="right">▶</button>
+  <button id="gas">▲</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
+<script>
+const canvas=document.getElementById('game');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x8bb7d9);
+scene.fog=new THREE.Fog(0x8bb7d9,120,360);
+
+const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,500);
+
+scene.add(new THREE.HemisphereLight(0xbfe2ff,0x39412f,1.8));
+const sun=new THREE.DirectionalLight(0xffffff,2.2);
+sun.position.set(80,130,50); sun.castShadow=true; scene.add(sun);
+
+const ground=new THREE.Mesh(
+ new THREE.PlaneGeometry(500,500),
+ new THREE.MeshStandardMaterial({color:0x6e8b62,roughness:1})
+);
+ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+
+function box(w,h,d,c,x,y,z){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color:c}));
+ m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; scene.add(m); return m;
+}
+
+// Original city layout: broad grid roads with blocks between them.
+const roadMat=new THREE.MeshStandardMaterial({color:0x30343a});
+function road(w,d,x,z){
+ const r=new THREE.Mesh(new THREE.BoxGeometry(w,.06,d),roadMat);
+ r.position.set(x,.03,z); r.receiveShadow=true; scene.add(r);
+}
+for(let i=-160;i<=160;i+=55){ road(500,16,0,i); road(16,500,i,0); }
+
+// sidewalks / block buildings
+for(let bx=-137;bx<=137;bx+=55){
+ for(let bz=-137;bz<=137;bz+=55){
+   if(Math.abs(bx)<25 && Math.abs(bz)<25) continue;
+   const h=10+((Math.abs(bx*bz)%27));
+   const w=32, d=32;
+   box(w,h,d,0x8c8178,bx,h/2,bz);
+   // rooftop accent
+   box(w*.7,1.2,d*.7,0x565b61,bx,h+.6,bz);
+ }
+}
+
+// simple street lamps
+for(let i=-135;i<=135;i+=55){
+ for(const z of [-8,8]){
+   box(.3,6,.3,0x222222,i,3,z);
+   box(2,.15,2,0xffe4a1,i,6,z);
+ }
+}
+
+const player=new THREE.Group();
+const body=box(1.2,1.8,.7,0x315b87,0,1,0);
+body.position.set(0,1,0); player.add(body);
+const head=new THREE.Mesh(new THREE.SphereGeometry(.42,20,14),new THREE.MeshStandardMaterial({color:0xc98d68}));
+head.position.set(0,2.15,0); head.castShadow=true; player.add(head);
+player.position.set(0,0,8); scene.add(player);
+
+function makeCar(color=0xb53b32){
+ const g=new THREE.Group();
+ const base=new THREE.Mesh(new THREE.BoxGeometry(2.1,.65,4.0),new THREE.MeshStandardMaterial({color,roughness:.7}));
+ base.position.y=.65;base.castShadow=true;g.add(base);
+ const cabin=new THREE.Mesh(new THREE.BoxGeometry(1.65,.65,1.9),new THREE.MeshStandardMaterial({color:0x27323a,roughness:.35,metalness:.1}));
+ cabin.position.set(0,1.08,.15);cabin.castShadow=true;g.add(cabin);
+ for(const x of [-.88,.88]) for(const z of [-1.25,1.25]){
+   const w=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.22,16),new THREE.MeshStandardMaterial({color:0x111111}));
+   w.rotation.z=Math.PI/2;w.position.set(x,.42,z);w.castShadow=true;g.add(w);
+ }
+ return g;
+}
+car=makeCar(0x2e6fa8);car.position.set(0,.05,28);scene.add(car);
+
+function makePolice(){
+ const p=makeCar(0xeeeeee);
+ p.userData.police=true;
+ const light=new THREE.Mesh(new THREE.BoxGeometry(.8,.12,.28),new THREE.MeshStandardMaterial({color:0xcc2020,emissive:0x550000}));
+ light.position.set(0,1.55,0); p.add(light);
+ scene.add(p); police.push(p); return p;
+}
+for(let i=0;i<3;i++){
+ const p=makePolice();
+ p.position.set(30+i*18,.05,-70-i*20);
+}
+function makeNPC(x,z,enemy=false){
+ const g=new THREE.Group();
+ const body=new THREE.Mesh(new THREE.CapsuleGeometry(.34,.85,4,8),new THREE.MeshStandardMaterial({color:enemy?0x7b3030:0x4d8060}));
+ body.position.y=1; body.castShadow=true; g.add(body);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.28,12,8),new THREE.MeshStandardMaterial({color:0xc58b67}));
+ head.position.y=1.75; head.castShadow=true; g.add(head);
+ g.position.set(x,0,z); g.userData.enemy=enemy; g.userData.hp=enemy?60:100; g.userData.dir=Math.random()*Math.PI*2;
+ scene.add(g); npcs.push(g); return g;
+}
+for(let i=0;i<10;i++) makeNPC(-120+(i%5)*55,-105+Math.floor(i/5)*80,false);
+for(let i=0;i<3;i++) makeNPC(35+i*12,-25-i*20,true);
+let insideHouse=false;
+const house=new THREE.Group();
+function box(w,h,d,color,x,y,z){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color}));
+ m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; return m;
+}
+house.add(box(18,7,14,0xc9a66b,85,3.5,-70));
+house.add(box(5,3,0.5,0x5a351f,85,1.5,-62.75)); // front door
+house.add(box(0.8,3,3,0x5a351f,94,1.5,-70)); // side door
+house.add(box(3,0.3,3,0x5a351f,80,0.2,-66)); // porch
+house.position.y=0;
+scene.add(house);
+
+const interior=new THREE.Group();
+interior.visible=false;
+interior.add(box(18,.3,14,0x76543b,85,.15,-70));
+interior.add(box(17,.25,.25,0xe8d9b8,85,2.8,-63.5));
+interior.add(box(5,.7,2.5,0x50372b,81,1,-67));
+interior.add(box(3,1.2,1.2,0x334455,89,0.8,-73));
+interior.add(box(2,.15,2,0x8b5a2b,85,2.5,-72));
+for(let i=0;i<5;i++) interior.add(box(2.5,.25,1,0x7b4b2a,77+i*1.5,.45+i*.45,-66));
+scene.add(interior);
+
+function toggleHouse(){
+ const d=player.position.distanceTo(new THREE.Vector3(85,0,-62));
+ if(!insideHouse && d<8){
+   insideHouse=true; house.visible=false; interior.visible=true;
+   player.position.set(85,0,-65);
+   document.getElementById('houseInfo').textContent='🏠 گھر: اندر';
+ } else if(insideHouse){
+   insideHouse=false; interior.visible=false; house.visible=true;
+   player.position.set(85,0,-59);
+   document.getElementById('houseInfo').textContent='🏠 گھر: باہر';
+ }
+}
+window.addEventListener('keydown',e=>{
+ if(e.key.toLowerCase()==='f5') saveGame();
+ if(e.key.toLowerCase()==='f9') loadGame();
+ if(e.key.toLowerCase()==='r') useBuildingService();
+ if(e.key.toLowerCase()==='p') saveGame();
+
+ if(e.key.toLowerCase()==='e'){
+   toggleHouse();
+   buyAmmo();
+   enterBike();
+   enterBoat();
+   startDeliveryMission();
+   enterBuilding();
+   useBuildingService();
+   startSideMission();
+ }
+});
+
+const missionMarker=box(2,1.2,2,0xf2c94c,25,.6,35);
+scene.add(missionMarker);
+missionMarker.userData.spin=0;
+
+
+const shop=box(5,3.5,5,0x8e44ad, -75,1.75,65);
+scene.add(shop);
+const shopSign=box(3.5,1.2,.25,0xf1c40f,-75,4.1,62.35);
+scene.add(shopSign);
+
+const healthPickup=box(1,1,1,0xe74c3c,55,.5,55);
+const armorPickup=box(1,1,1,0x3498db,65,.5,55);
+scene.add(healthPickup,armorPickup);
+const invPickups25=[];
+function makeInvPickup25(type,x,z,color){const m=box(1.2,1.2,1.2,color,x,.6,z);m.userData.invType=type;invPickups25.push(m);return m;}
+makeInvPickup25('med',38,55,0xe74c3c); makeInvPickup25('armor',48,55,0x3498db); makeInvPickup25('ammo',58,55,0xf1c40f);
+
+let healthTaken=false, armorTaken=false;
+
+
+function makeBike(x,z){
+ const g=new THREE.Group();
+ const body=box(1.1,.45,2.4,0x222222,0,0,0); body.position.y=.8; g.add(body);
+ const seat=box(.7,.18,.9,0x111111,0,1.15,-.15); g.add(seat);
+ for(const dz of [-.9,.9]){
+   const w=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.18,12),new THREE.MeshStandardMaterial({color:0x111111}));
+   w.rotation.z=Math.PI/2; w.position.set(0,.45,dz); g.add(w);
+ }
+ g.position.set(x,0,z); scene.add(g);
+ g.userData.type='bike'; g.userData.hp=100; return g;
+}
+bike=makeBike(-20,70);
+
+function enterBoat(){
+ const target=inCar?boat:player;
+ if(!inCar && boat && player.position.distanceTo(boat.position)<5){
+   inCar=true; vehicleType='boat'; boatSpeed=0;
+ } else if(inCar && vehicleType==='boat'){
+   inCar=false; player.position.copy(boat.position); player.position.z+=3;
+   document.getElementById('vehicleInfo').textContent='🚤 Boat: باہر';
+ }
+}
+function enterBike(){
+ const target=inCar?car:player;
+ if(!inCar && bike && player.position.distanceTo(bike.position)<4){
+   inCar=true; car.visible=false; bike.visible=true;
+   bikeSpeed=0; vehicleType='bike'; vehicleHP=bike.userData.hp;
+   document.getElementById('vehicleInfo').textContent='🏍️ Bike: چل رہی ہے';
+ } else if(inCar && vehicleType==='bike'){
+   inCar=false; player.position.copy(bike.position); player.position.z+=2.5;
+   document.getElementById('vehicleInfo').textContent='🏍️ Bike: باہر';
+ }
+}
+
+
+function updateBike(dt){
+ if(inCar && vehicleType==='bike') vehicleFuel=Math.max(0,vehicleFuel-Math.abs(bikeSpeed)*dt*.015);
+ if(!inCar || vehicleType!=='bike' || !bike) return;
+ let throttle=0;
+ if(keys.w) throttle=1;
+ if(keys.s) throttle=-1;
+ bikeSpeed += throttle*18*dt;
+ bikeSpeed *= Math.pow(.92,dt*10);
+ bikeSpeed=Math.max(-10,Math.min(28,bikeSpeed));
+ if(keys.a) bike.rotation.y += 1.8*dt*(Math.abs(bikeSpeed)/10);
+ if(keys.d) bike.rotation.y -= 1.8*dt*(Math.abs(bikeSpeed)/10);
+ bike.position.x += Math.sin(bike.rotation.y)*bikeSpeed*dt;
+ bike.position.z += Math.cos(bike.rotation.y)*bikeSpeed*dt;
+ vehicleHP=Math.max(0,vehicleHP);
+ bike.userData.hp=vehicleHP;
+ document.getElementById('vehicleInfo').textContent='🏍️ Bike HP: '+Math.ceil(vehicleHP);
+ if(vehicleHP<=0){
+   inCar=false; player.position.copy(bike.position); player.position.z+=2;
+   document.getElementById('vehicleInfo').textContent='💥 Bike تباہ ہوگئی';
+   bike.visible=false;
+   setTimeout(()=>{bike.visible=true; vehicleHP=100; bike.userData.hp=100; bike.position.set(-20,0,70)},4000);
+ }
+}
+
+
+// Water + bridge + airport/airstrip
+const water=new THREE.Mesh(
+ new THREE.PlaneGeometry(260,100),
+ new THREE.MeshStandardMaterial({color:0x176b87,roughness:.8})
+);
+water.rotation.x=-Math.PI/2; water.position.set(0,-.08,145); scene.add(water);
+
+const bridge=box(28,1.2,85,0x777777,0,.6,105); scene.add(bridge);
+for(let z=65;z<150;z+=8){
+  const rail=box(1,.8,1,0x444444,-13,1.3,z); scene.add(rail);
+  const rail2=box(1,.8,1,0x444444,13,1.3,z); scene.add(rail2);
+}
+
+const runway=box(38,.25,75,0x333333,-70,.12,145); scene.add(runway);
+for(let z=112;z<180;z+=12) scene.add(box(1,.08,6,0xf4f4f4,-70,.3,z));
+const terminal=box(24,7,16,0xd8c7a1,-70,3.5,102); scene.add(terminal);
+
+function makeBoat(x,z){
+ const g=new THREE.Group();
+ const hull=box(3,.8,7,0x8b4513,0,.5,0); g.add(hull);
+ const cabin=box(2,1.1,2,0xf1f1f1,0,1.2,-.5); g.add(cabin);
+ g.position.set(x,.1,z); scene.add(g); return g;
+}
+boat=makeBoat(0,150);
+
+function makePlane(x,z){
+ const g=new THREE.Group();
+ g.add(box(2,.7,8,0xd9d9d9,0,4,0));
+ g.add(box(10,.25,2.2,0xd9d9d9,0,4,0));
+ g.add(box(1.5,.3,2,0xd9d9d9,0,5.2,-2.7));
+ g.position.set(x,0,z); scene.add(g); return g;
+}
+plane=makePlane(-70,155);
+
+function updateWaterVehicles(dt){
+ if(inCar && vehicleType==='boat') vehicleFuel=Math.max(0,vehicleFuel-Math.abs(boatSpeed)*dt*.01);
+ const target=inCar? (vehicleType==='bike'?bike:car) : player;
+ if(boat && !inCar && target.position.distanceTo(boat.position)<5){
+   inCar=true; vehicleType='boat'; boatSpeed=0;
+   document.getElementById('vehicleInfo').textContent='🚤 Boat: چل رہی ہے';
+ }
+ if(inCar && vehicleType==='boat'){
+   if(keys.w) boatSpeed+=14*dt;
+   if(keys.s) boatSpeed-=14*dt;
+   boatSpeed*=Math.pow(.94,dt*10);
+   boatSpeed=Math.max(-6,Math.min(18,boatSpeed));
+   if(keys.a) boat.rotation.y+=1.2*dt;
+   if(keys.d) boat.rotation.y-=1.2*dt;
+   boat.position.x+=Math.sin(boat.rotation.y)*boatSpeed*dt;
+   boat.position.z+=Math.cos(boat.rotation.y)*boatSpeed*dt;
+   document.getElementById('vehicleInfo').textContent='🚤 Boat: '+Math.ceil(Math.abs(boatSpeed))+' km/h';
+ }
+ if(plane){
+   plane.rotation.y+=dt*.18;
+   plane.position.x+=Math.sin(plane.rotation.y)*dt*7;
+   plane.position.z+=Math.cos(plane.rotation.y)*dt*7;
+   if(Math.abs(plane.position.x)>115 || Math.abs(plane.position.z)>210) plane.position.set(-70,0,155);
+ }
+ const px=target.position.x,pz=target.position.z;
+ const inWater=Math.abs(pz-145)<50 && Math.abs(px)>18;
+ document.getElementById('worldInfo').textContent=inWater?'🌊 Water: Boat area':'🌉 Bridge/Airport: explore';
+}
+
+
+function makeHelicopter(){
+ const g=new THREE.Group();
+ g.add(box(2.4,1.2,4,0x3b4650,0,0,0));
+ g.add(box(4.8,.18,.45,0x20252a,0,.9,0));
+ g.add(box(.35,.35,1.2,0x20252a,0,.1,-2.5));
+ g.position.set(0,18,0);
+ scene.add(g); return g;
+}
+helicopter=makeHelicopter();
+
+function updatePoliceSupport(dt){
+ const target=inCar ? (vehicleType==='bike'?bike:vehicleType==='boat'?boat:car) : player;
+ if(typeof wanted!=='undefined'){
+   document.getElementById('wantedInfo').textContent='🚨 Wanted: '+wanted+'/5';
+ }
+ if(wanted>=3 && helicopter){
+   heliAngle+=dt*.35;
+   const radius=28;
+   helicopter.position.x=target.position.x+Math.cos(heliAngle)*radius;
+   helicopter.position.z=target.position.z+Math.sin(heliAngle)*radius;
+   helicopter.position.y=18+Math.sin(heliAngle*2)*2;
+   helicopter.lookAt(target.position.x,8,target.position.z);
+ }
+ if(wanted<3 && helicopter){
+   helicopter.position.lerp(new THREE.Vector3(0,18,-20),Math.min(1,dt));
+   helicopter.rotation.y+=dt*.15;
+ }
+ // Higher wanted levels attract more police cars toward the player.
+ if(wanted>=2 && typeof policeCars!=='undefined'){
+   for(const p of policeCars){
+     if(!p) continue;
+     const dx=target.position.x-p.position.x, dz=target.position.z-p.position.z;
+     const d=Math.hypot(dx,dz);
+     if(d>4 && d<100){
+       p.position.x += dx/d * dt*(5+wanted);
+       p.position.z += dz/d * dt*(5+wanted);
+       p.rotation.y=Math.atan2(dx,dz);
+     }
+   }
+ }
+}
+
+
+function updateNPCWorld(dt){
+ const target=inCar ? (vehicleType==='bike'?bike:vehicleType==='boat'?boat:car) : player;
+ let count=0;
+ for(const n of npcs){
+   if(!n.parent) continue;
+   count++;
+   const dx=target.position.x-n.position.x, dz=target.position.z-n.position.z;
+   const d=Math.hypot(dx,dz);
+   if(n.userData.enemy){
+     if(d<45 && d>4){
+       n.userData.dir=Math.atan2(dx,dz);
+       n.position.x+=Math.sin(n.userData.dir)*dt*1.2;
+       n.position.z+=Math.cos(n.userData.dir)*dt*1.2;
+       n.rotation.y=n.userData.dir;
+     }
+   }else{
+     // Simple pedestrian wandering, avoiding the player.
+     if(d<4){
+       n.userData.dir+=Math.PI*dt;
+     }else if(Math.random()<dt*.15){
+       n.userData.dir+=(Math.random()-.5)*1.5;
+     }
+     n.position.x+=Math.sin(n.userData.dir)*dt*.9;
+     n.position.z+=Math.cos(n.userData.dir)*dt*.9;
+     n.rotation.y=n.userData.dir;
+     n.position.x=Math.max(-125,Math.min(125,n.position.x));
+     n.position.z=Math.max(-125,Math.min(125,n.position.z));
+   }
+ }
+ document.getElementById('npcInfo').textContent='👥 City NPCs: '+count;
+ npcTalkTimer-=dt;
+ if(npcTalkTimer<=0 && !inCar){
+   for(const n of npcs){
+     if(!n.userData.enemy && n.position.distanceTo(player.position)<3){
+       document.getElementById('npcInfo').textContent='👥 NPC: سلام! شہر میں خوش آمدید';
+       npcTalkTimer=4; break;
+     }
+   }
+ }
+}
+
+
+function makeMissionNPC(x,z){
+ const n=makeNPC(x,z,false);
+ n.userData.mission=true;
+ n.children[0].material.color.set(0x9b59b6);
+ const marker=box(1.4,.35,1.4,0xf1c40f,x,2.5,z);
+ scene.add(marker);
+ n.userData.marker=marker;
+ missionNPC=n;
+}
+makeMissionNPC(42,18);
+
+function updateMissionNPC(dt){
+ if(!missionNPC || !missionNPC.parent) return;
+ const target=inCar ? (vehicleType==='bike'?bike:vehicleType==='boat'?boat:car) : player;
+ missionNPC.userData.marker.position.y=2.5+Math.sin(performance.now()/250)*.25;
+ const d=target.position.distanceTo(missionNPC.position);
+ if(d<5 && !missionActive){
+   document.getElementById('dialogue').textContent=missionFailed
+     ? '💬 مشن ناکام — E دبائیں اور دوبارہ کوشش کریں'
+     : '💬 مشن دینے والا: E دبائیں — مشن شروع کریں';
+ } else if(d>=5 && dialogueTimer<=0){
+   document.getElementById('dialogue').textContent='💬 شہر میں مشن تلاش کریں';
+ }
+ dialogueTimer-=dt;
+}
+
+function startDeliveryMission(){
+ const target=inCar ? (vehicleType==='bike'?bike:vehicleType==='boat'?boat:car) : player;
+ if(!missionNPC || target.position.distanceTo(missionNPC.position)>=6 || missionActive) return;
+
+ const missions18=[
+   {name:'Delivery Run',time:90,reward:500,target:[-55, -45],objective:'پیلا نشان تک سامان پہنچائیں'},
+   {name:'Downtown Rush',time:80,reward:650,target:[55, -20],objective:'مقررہ جگہ پر جلد پہنچیں'},
+   {name:'Airport Getaway',time:70,reward:800,target:[80, 70],objective:'گاڑی کو آخری نشان تک لے جائیں'}
+ ];
+ const m=missions18[missionIndex18];
+ if(!missionFailed) missionIndex18=(missionIndex18+1)%missions18.length;
+ missionName=m.name;
+ missionReward=m.reward;
+ missionObjective=m.objective;
+ missionTimer=m.time;
+ missionActive=true;
+ missionFailed=false;
+ missionStep=(missionStep+1)%missions18.length;
+ missionMarker.position.set(m.target[0],1.2,m.target[1]);
+ document.getElementById('mission').textContent='🎯 '+missionName+' — '+missionObjective+' | '+m.time+'s';
+ document.getElementById('dialogue').textContent='💬 مشن شروع! نشان تک پہنچیں۔';
+ dialogueTimer=4;
+}
+
+function makeBuilding(x,z,color,label){
+ const g=new THREE.Group();
+ g.add(box(14,8,12,color,0,4,0));
+ const door=box(3,3,.5,0x4b2e1f,0,1.5,6.1); g.add(door);
+ g.position.set(x,0,z); scene.add(g);
+ g.userData.label=label;
+ g.userData.door=new THREE.Vector3(x,0,z+7);
+ return g;
+}
+const policeStation=makeBuilding(-45,-70,0x536878,'Police Station');
+const hospital=makeBuilding(10,-70,0xd6d6d6,'Hospital');
+const garage=makeBuilding(65,-10,0xb8793c,'Garage');
+const fireStation=makeBuilding(-105,45,0xc44b3f,'Fire Station');
+const motel=makeBuilding(105,55,0xd0a85c,'Motel');
+const warehouse=makeBuilding(-105,-35,0x777777,'Warehouse');
+const marina=makeBuilding(105,120,0x6aa6a6,'Marina');
+const safehouse=makeBuilding(-10,55,0x8e6fb2,'Safehouse');
+
+const buildingInterior=new THREE.Group();
+buildingInterior.visible=false;
+buildingInterior.add(box(16,.25,14,0x5b4636,0,0,-0));
+buildingInterior.add(box(15,.25,.3,0xf0e0c0,0,2.8,6));
+scene.add(buildingInterior);
+
+function enterBuilding(){
+ const target=inCar ? (vehicleType==='bike'?bike:vehicleType==='boat'?boat:car) : player;
+ const buildings=[policeStation,hospital,garage,safehouse];
+ if(!buildingInside){
+   for(const b of buildings){
+     if(target.position.distanceTo(b.userData.door)<5){
+       buildingInside=true; currentBuilding=b;
+       buildingInterior.visible=true;
+       b.visible=false;
+       player.position.set(0,0,0);
+       if(inCar){inCar=false; vehicleType='';}
+       document.getElementById('buildingInfo').textContent='🏢 '+b.userData.label+': اندر';
+       return;
+     }
+   }
+ }else{
+   buildingInside=false;
+   buildingInterior.visible=false;
+   currentBuilding.visible=true;
+   player.position.set(currentBuilding.position.x,currentBuilding.position.y,currentBuilding.position.z+8);
+   document.getElementById('buildingInfo').textContent='🏢 عمارت: باہر';
+   currentBuilding=null;
+ }
+}
+
+
+
+function useBuildingService(){
+  if(!currentBuilding || !buildingInside) return;
+  const label=currentBuilding.userData.label;
+  if(label==='Hospital'){
+    health=100; armor=Math.max(armor,50);
+    document.getElementById('health').textContent='❤️ Health: 100 • Armor: '+armor;
+    document.getElementById('buildingInfo').textContent='🏥 Hospital: Health restored';
+  } else if(label==='Garage'){
+    if(money>=100){
+      money-=100; vehicleHP=100; vehicleFuel=100;
+      document.getElementById('money').textContent='💵 $'+money;
+      document.getElementById('vehicleInfo').textContent='🔧 Vehicle repaired • Fuel 100%';
+      document.getElementById('buildingInfo').textContent='🔧 Garage: Repair complete';
+    } else {
+      document.getElementById('buildingInfo').textContent='🔧 Garage: $100 required';
+    }
+  } else if(label==='Police Station'){
+    if(money>=50){
+      money-=50; wanted=0;
+      document.getElementById('money').textContent='💵 $'+money;
+      document.getElementById('wantedInfo').textContent='🚨 Wanted: 0/5';
+      document.getElementById('buildingInfo').textContent='🚔 Police Station: Wanted cleared';
+    } else {
+      document.getElementById('buildingInfo').textContent='🚔 Police Station: $50 required';
+    }
+  } else if(label==='Safehouse'){
+    health=100; armor=100; wanted=0;
+    document.getElementById('health').textContent='❤️ Health: 100 • Armor: 100';
+    document.getElementById('wantedInfo').textContent='🚨 Wanted: 0/5';
+    saveGame();
+    document.getElementById('buildingInfo').textContent='🏠 Safehouse: Rested • Wanted cleared • Game saved';
+  }
+}
+
+function saveGame(){
+  const target=inCar ? (vehicleType==='bike'?bike:vehicleType==='boat'?boat:car) : player;
+  const data={
+    x:target.position.x,z:target.position.z,money,health,armor,ammo,wanted,
+    gameClock,dayCount,weather,vehicleType,vehicleFuel,medkits,armorPlates,ammoPacks
+  };
+  localStorage.setItem('openCityMegaSave',JSON.stringify(data));
+  document.getElementById('systemInfo').textContent='💾 Game saved';
+}
+function loadGame(){
+  const raw=localStorage.getItem('openCityMegaSave');
+  if(!raw){document.getElementById('systemInfo').textContent='💾 No save found';return;}
+  try{
+    const d=JSON.parse(raw);
+    player.position.set(d.x||0,0,d.z||0);
+    money=d.money??money; health=d.health??health; armor=d.armor??armor;
+    ammo=d.ammo??ammo; wanted=d.wanted??wanted; gameClock=d.gameClock??gameClock;
+    dayCount=d.dayCount??dayCount; weather=d.weather??weather;
+    vehicleFuel=d.vehicleFuel??vehicleFuel; medkits=d.medkits??medkits; armorPlates=d.armorPlates??armorPlates; ammoPacks=d.ammoPacks??ammoPacks; updateInventory25();
+    weatherIndex=Math.max(0,weatherModes.indexOf(weather));
+    applyStep21Weather();
+    document.getElementById('money').textContent='💵 $'+money;
+    document.getElementById('health').textContent='❤️ Health: '+health+' • Armor: '+armor;
+    document.getElementById('weapon').textContent='🔫 Pistol • Ammo: '+ammo;
+    document.getElementById('systemInfo').textContent='💾 Save loaded';
+  }catch(e){document.getElementById('systemInfo').textContent='💾 Save error';}
+}
+
+function updateWorldClock(dt){
+  gameClock += dt*1.6;
+  if(gameClock>=1440){gameClock-=1440;dayCount++;}
+  const h=Math.floor(gameClock/60), m=Math.floor(gameClock%60);
+  document.getElementById('timeInfo').textContent='🕒 Day '+dayCount+' '+String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+  const night=(h<6 || h>=19);
+  if(scene.fog) scene.fog.density=weather==='fog'?.018:(night?.012:.006);
+  updateDayNightVisual();
+}
+
+let weatherModes=['clear','rain','fog'];
+let weatherIndex=0;
+function applyStep21Weather(){
+  const mode=weatherModes[weatherIndex];
+  if(mode==='clear'){
+    scene.background.set(0x8bb7d9);
+    scene.fog.color.set(0x8bb7d9);
+    sun.intensity=2.2;
+    document.getElementById('weatherBtn').textContent='☀️';
+  }else if(mode==='rain'){
+    scene.background.set(0x5e6f80);
+    scene.fog.color.set(0x5e6f80);
+    sun.intensity=1.25;
+    document.getElementById('weatherBtn').textContent='🌧️';
+  }else{
+    scene.background.set(0x899097);
+    scene.fog.color.set(0x899097);
+    sun.intensity=0.9;
+    document.getElementById('weatherBtn').textContent='🌫️';
+  }
+  weather=mode;
+  document.getElementById('worldInfo').textContent='🌦️ Weather: '+mode.toUpperCase();
+}
+function cycleWeather(){
+  weatherIndex=(weatherIndex+1)%weatherModes.length;
+  applyStep21Weather();
+  saveGame();
+}
+document.getElementById('weatherBtn').addEventListener('click',cycleWeather);
+
+function updateDayNightVisual(){
+  const h=gameClock/60;
+  const night=(h<6 || h>=19);
+  const dawn=h>=6 && h<8, dusk=h>=17 && h<19;
+  if(weather==='clear'){
+    if(night){scene.background.set(0x10182b);scene.fog.color.set(0x10182b);sun.intensity=0.35;}
+    else if(dawn||dusk){scene.background.set(0x6f8fae);scene.fog.color.set(0x6f8fae);sun.intensity=1.0;}
+    else {scene.background.set(0x8bb7d9);scene.fog.color.set(0x8bb7d9);sun.intensity=2.2;}
+  }
+}
+
+function startSideMission(){
+  const target=inCar ? (vehicleType==='bike'?bike:vehicleType==='boat'?boat:car) : player;
+  if(sideMissionActive) return;
+  if(target.position.distanceTo(new THREE.Vector3(-20,0,-20))<7){
+    sideMissionActive=true;
+    sideMissionTarget=new THREE.Vector3(75,0,45);
+    document.getElementById('mission').textContent='🎯 Side Mission: Delivery — 90s';
+    missionTimer=90;
+  }
+}
+function updateSideMission(dt){
+  if(!sideMissionActive || !sideMissionTarget) return;
+  const target=inCar ? (vehicleType==='bike'?bike:vehicleType==='boat'?boat:car) : player;
+  missionTimer-=dt;
+  const d=target.position.distanceTo(sideMissionTarget);
+  if(d<5){
+    money+=sideMissionReward; sideMissionActive=false; sideMissionTarget=null;
+    document.getElementById('money').textContent='💵 $'+money;
+    document.getElementById('mission').textContent='✅ Side Mission complete! +$'+sideMissionReward;
+  }else if(missionTimer<=0){
+    sideMissionActive=false; sideMissionTarget=null;
+    document.getElementById('mission').textContent='❌ Side Mission failed';
+  }else{
+    document.getElementById('mission').textContent='🎯 Side Mission: '+Math.ceil(missionTimer)+'s';
+  }
+}
+
+function updateShop(dt){
+ const target=inCar?car:player;
+ const d=target.position.distanceTo(shop.position);
+ if(d<8){
+   document.getElementById('shopInfo').textContent='🏪 Shop: E دبائیں — Ammo $50';
+   if(shopMsgTimer<=0) shopMsgTimer=dt;
+ } else {
+   document.getElementById('shopInfo').textContent='🏪 Shop: دور';
+ }
+ if(d<5 && shopMsgTimer>0){
+   document.getElementById('shopInfo').textContent='🏪 Ammo خریدنے کے لیے E دبائیں';
+ }
+ if(!healthTaken && target.position.distanceTo(healthPickup.position)<2){
+   healthTaken=true; health=100;
+   document.getElementById('health').textContent='❤️ Health: 100 • Armor: '+armor;
+   scene.remove(healthPickup);
+ }
+ if(!armorTaken && target.position.distanceTo(armorPickup.position)<2){
+   armorTaken=true; armor=100;
+   document.getElementById('health').textContent='❤️ Health: '+health+' • Armor: 100';
+   scene.remove(armorPickup);
+ }
+ shopMsgTimer-=dt;
+}
+function buyAmmo(){
+ const target=inCar?car:player;
+ if(target.position.distanceTo(shop.position)<6 && money>=50){
+   money-=50; ammo+=12;
+   document.getElementById('money').textContent='💵 $'+money;
+   document.getElementById('weapon').textContent='🔫 Pistol • Ammo: '+ammo;
+   document.getElementById('shopInfo').textContent='🏪 +12 Ammo خرید لیا';
+ }
+}
+
+const cashPickup=box(.8,.8,.8,0x2ecc71,-35,.5,20);
+scene.add(cashPickup);
+let cashTaken=false;
+
+function updateMission(dt){
+ missionMarker.userData.spin+=dt*2;
+ missionMarker.rotation.y=missionMarker.userData.spin;
+ const target=inCar ? car : player;
+
+ if(missionActive){
+   missionTimer-=dt;
+   const d=target.position.distanceTo(missionMarker.position);
+
+   if(d<4){
+     const earned=missionReward;
+     missionActive=false;
+     missionStep=0;
+     missionFailed=false;
+     money+=earned;
+     document.getElementById('money').textContent='💵 $'+money;
+     document.getElementById('mission').textContent='✅ '+missionName+' مکمل! +$'+earned;
+     document.getElementById('dialogue').textContent='💬 مشن کامیاب — انعام مل گیا۔';
+     setTimeout(()=>{if(!missionActive) document.getElementById('mission').textContent='🎯 کوئی مشن فعال نہیں'},3000);
+   }else if(missionTimer<=0){
+     missionActive=false;
+     missionStep=0;
+     missionFailed=true;
+     document.getElementById('mission').textContent='❌ مشن ناکام — دوبارہ کوشش کے لیے مشن دینے والے کے پاس E دبائیں';
+     document.getElementById('dialogue').textContent='💬 دوبارہ کوشش کے لیے مشن دینے والے کے پاس جائیں۔';
+   }else{
+     document.getElementById('mission').textContent='🎯 '+missionName+' | '+missionObjective+' | '+Math.ceil(missionTimer)+'s';
+   }
+ }
+
+ if(!cashTaken && target.position.distanceTo(cashPickup.position)<2){
+   cashTaken=true; money+=100;
+   document.getElementById('money').textContent='💵 $'+money;
+   scene.remove(cashPickup);
+ }
+}
+for(let i=0;i<6;i++){
+ const t=makeCar([0x9d3b34,0x4b8d58,0xc6a43a,0x6e5b9c][i%4]);
+ t.position.set(i%2?55:-55,.05,-130+i*48);
+ t.userData.dir=i%2?1:-1;
+ traffic.push(t);scene.add(t);
+}
+
+let yaw=0, speed=0, joyX=0, joyY=0;
+let inCar=false, car=null, carSpeed=0, steer=0, braking=false, gas=false;
+const traffic=[]; 
+const police=[];
+let wanted=0, wantedTimer=0;
+let fireCooldown=0;
+const bullets=[];
+let money=500, missionActive=false, missionStep=0, missionTimer=0;
+let ammo=12;
+let shopMsgTimer=0;
+let bike=null, bikeSpeed=0, vehicleHP=100, vehicleType='';
+let boat=null, boatSpeed=0, plane=null, planeSpeed=0;
+let helicopter=null, heliAngle=0;
+let npcTalkTimer=0;
+let missionNPC=null, missionChoice=0, dialogueTimer=0;
+let currentBuilding=null, buildingInside=false;
+let gameClock=8*60, dayCount=1, weather='clear';
+let vehicleFuel=100, vehicleRepairCost=0;
+let saveTimer=0, wantedFreeze=0;
+let sideMissionActive=false, sideMissionTarget=null, sideMissionReward=750;
+let missionFailed=false, missionReward=250, missionName='Delivery', missionObjective='پہلے مشن دینے والے تک پہنچیں', missionIndex18=0;
+
+
+const npcs=[];
+const policeCars=[];
+let health=100, armor=0, npcDamageTimer=0;
+let medkits=2, armorPlates=2, ammoPacks=2;
+function updateInventory25(){
+ document.getElementById('inventory25').innerHTML='🎒 Inventory<br>💊 Medkit: '+medkits+'<br>🛡️ Armor Plate: '+armorPlates+'<br>🔫 Ammo Pack: '+ammoPacks;
+}
+function invToast25(t){const e=document.getElementById('invToast25');e.textContent=t;e.style.display='block';clearTimeout(window.__inv25);window.__inv25=setTimeout(()=>e.style.display='none',1500)}
+function useInventory25(n){
+ if(n===1){ if(medkits<=0){invToast25('💊 No Medkit');return;} if(health>=100){invToast25('❤️ Health already full');return;} medkits--; health=Math.min(100,health+50); invToast25('💊 Medkit used: +50 Health');}
+ if(n===2){ if(armorPlates<=0){invToast25('🛡️ No Armor Plate');return;} if(armor>=100){invToast25('🛡️ Armor already full');return;} armorPlates--; armor=Math.min(100,armor+50); invToast25('🛡️ Armor Plate used: +50 Armor');}
+ if(n===3){ if(ammoPacks<=0){invToast25('🔫 No Ammo Pack');return;} ammoPacks--; ammo=Math.min(60,ammo+12); invToast25('🔫 Ammo Pack used: +12 Ammo');}
+ document.getElementById('health').textContent='❤️ Health: '+health+' • Armor: '+armor; document.getElementById('weapon').textContent='🔫 Pistol • Ammo: '+ammo; updateInventory25();
+}
+function pickup25(type){ if(type==='med'){medkits++;invToast25('💊 Medkit picked up');} if(type==='armor'){armorPlates++;invToast25('🛡️ Armor Plate picked up');} if(type==='ammo'){ammoPacks++;invToast25('🔫 Ammo Pack picked up');} updateInventory25(); }
+const keys={};
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true; if(['1','2','3'].includes(e.key)) useInventory25(Number(e.key));});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+addEventListener('keydown',e=>{if(e.key.toLowerCase()==='v') cycleWeather();});
+
+const joy=document.getElementById('joy'), stick=document.getElementById('stick');
+let joyId=null, joyRect;
+function joyMove(e){
+ const r=joyRect||joy.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+ let dx=e.clientX-cx, dy=e.clientY-cy, len=Math.hypot(dx,dy), max=40;
+ if(len>max){dx*=max/len;dy*=max/len}
+ stick.style.transform=`translate(${dx}px,${dy}px)`;
+ joyX=dx/max; joyY=dy/max;
+}
+joy.addEventListener('pointerdown',e=>{joyId=e.pointerId;joyRect=joy.getBoundingClientRect();joy.setPointerCapture(e.pointerId);joyMove(e)});
+joy.addEventListener('pointermove',e=>{if(e.pointerId===joyId)joyMove(e)});
+joy.addEventListener('pointerup',e=>{if(e.pointerId===joyId){joyId=null;joyX=joyY=0;stick.style.transform='translate(0,0)'}});
+
+const look=document.getElementById('look');
+let lookId=null,lastX=0;
+look.addEventListener('pointerdown',e=>{lookId=e.pointerId;lastX=e.clientX;look.setPointerCapture(e.pointerId)});
+look.addEventListener('pointermove',e=>{if(e.pointerId===lookId){yaw-=(e.clientX-lastX)*.006;lastX=e.clientX}});
+look.addEventListener('pointerup',e=>{if(e.pointerId===lookId)lookId=null});
+
+const carBtn=document.getElementById('carBtn'), drive=document.getElementById('drive');
+const fireBtn=document.getElementById('fire'), weaponEl=document.getElementById('weapon');
+function shoot(){
+ if(fireCooldown>0 || ammo<=0 || inCar) return;
+ ammo--; fireCooldown=.25;
+ weaponEl.textContent='🔫 Pistol • Ammo: '+ammo;
+ const origin=(inCar?car:player).position.clone();
+ const dir=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
+ const b=new THREE.Mesh(new THREE.SphereGeometry(.08,8,8),new THREE.MeshBasicMaterial({color:0xffdd55}));
+ b.position.copy(origin); b.position.y+=1.1; b.userData.life=1.3; b.userData.dir=dir;
+ scene.add(b); bullets.push(b); triggerWanted();
+}
+fireBtn.addEventListener('pointerdown',e=>{e.preventDefault();shoot()});
+addEventListener('keydown',e=>{if(e.key.toLowerCase()==='f')shoot()});
+
+const wantedEl=document.getElementById('wanted');
+function setWanted(n){
+ wanted=Math.max(0,Math.min(5,n));
+ wantedTimer=wanted?18:0;
+ wantedEl.textContent='WANTED: '+'★'.repeat(wanted)+'☆'.repeat(5-wanted);
+}
+function triggerWanted(){
+ setWanted(Math.min(5,wanted+1));
+}
+carBtn.addEventListener('click',()=>{
+ const d=player.position.distanceTo(car.position);
+ if(inCar) triggerWanted();
+ if(!inCar && d<4){
+   inCar=true; player.visible=false; carBtn.textContent='🚪 Exit'; drive.style.display='grid';
+ }else if(inCar){
+   inCar=false; player.visible=true; player.position.copy(car.position); player.position.x+=2.2;
+   carBtn.textContent='🚗 Enter'; drive.style.display='none';
+ }
+});
+function hold(el, down, up){
+ el.addEventListener('pointerdown',e=>{e.preventDefault();down()});
+ ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();up()}));
+}
+hold(document.getElementById('left'),()=>steer=-1,()=>{if(steer<0)steer=0});
+hold(document.getElementById('right'),()=>steer=1,()=>{if(steer>0)steer=0});
+hold(document.getElementById('gas'),()=>gas=true,()=>gas=false);
+hold(document.getElementById('brake'),()=>braking=true,()=>braking=false);
+
+const clock=new THREE.Clock();
+function animate(){
+ requestAnimationFrame(animate);
+ const dt=Math.min(clock.getDelta(),.05);
+ saveTimer+=dt;
+ if(saveTimer>30){saveTimer=0;saveGame();}
+ updateMission(dt);
+ updateShop(dt);
+ updateBike(dt);
+ updateWaterVehicles(dt);
+ updatePoliceSupport(dt);
+ updateNPCWorld(dt);
+ updateMissionNPC(dt);
+ updateWorldClock(dt);
+ updateSideMission(dt);
+ let f=(keys.w?1:0)-(keys.s?1:0), s=(keys.d?1:0)-(keys.a?1:0);
+ f += -joyY; s += joyX;
+ const len=Math.hypot(f,s); if(len>1){f/=len;s/=len}
+ if(inCar){
+   const throttle=(keys.w?1:0)+(gas?1:0), reverse=(keys.s?1:0);
+   if(throttle) carSpeed=Math.min(carSpeed+10*dt,18);
+   else if(reverse) carSpeed=Math.max(carSpeed-12*dt,-7);
+   else carSpeed*=Math.pow(.35,dt);
+   if(braking || keys[' ']) carSpeed*=Math.pow(.03,dt);
+   yaw -= steer * Math.sign(carSpeed||1) * Math.min(Math.abs(carSpeed)*.045,1.0)*dt;
+   car.rotation.y=yaw;
+   car.position.x += Math.sin(yaw)*carSpeed*dt;
+   car.position.z += Math.cos(yaw)*carSpeed*dt;
+   player.position.copy(car.position);
+ }else{
+   const move=7*dt;
+   player.position.x += (Math.sin(yaw)*f + Math.cos(yaw)*s)*move;
+   player.position.z += (Math.cos(yaw)*f - Math.sin(yaw)*s)*move;
+   player.rotation.y=yaw;
+ }
+ for(const t of traffic){
+   t.position.z += t.userData.dir*5*dt;
+   if(t.position.z>160)t.position.z=-160;
+   if(t.position.z<-160)t.position.z=160;
+ }
+ if(inCar && Math.abs(carSpeed)>4 && Math.random()<dt*.22) triggerWanted();
+ fireCooldown=Math.max(0,fireCooldown-dt);
+ for(let i=bullets.length-1;i>=0;i--){
+   const b=bullets[i]; b.position.addScaledVector(b.userData.dir,35*dt); b.userData.life-=dt;
+   if(b.userData.life<=0){scene.remove(b);bullets.splice(i,1);}
+ }
+ if(wanted>0){
+   wantedTimer-=dt;
+   if(wantedTimer<=0) setWanted(wanted-1);
+   for(const p of police){
+     const dx=car.position.x-p.position.x, dz=car.position.z-p.position.z;
+     const dist=Math.hypot(dx,dz);
+     if(dist>2 && dist<90){
+       const a=Math.atan2(dx,dz);
+       p.rotation.y=a;
+       p.position.x += Math.sin(a)*4.2*dt;
+       p.position.z += Math.cos(a)*4.2*dt;
+     }
+   }
+ }
+
+ const camDist=inCar?11:9, camH=inCar?6.2:5.2;
+ const target=new THREE.Vector3(player.position.x,1.4,player.position.z);
+ const desired=new THREE.Vector3(
+   player.position.x-Math.sin(yaw)*camDist,
+   player.position.y+camH,
+   player.position.z-Math.cos(yaw)*camDist
+ );
+ camera.position.lerp(desired,.12); camera.lookAt(target);
+ if(health<=0){
+  health=100; armor=0; wanted=0; money=Math.max(0,money-200);
+  player.position.set(0,0,0); inCar=false; vehicleType='';
+  document.getElementById('health').textContent='❤️ Health: 100 • Armor: 0';
+  document.getElementById('money').textContent='💵 $'+money;
+  document.getElementById('systemInfo').textContent='💀 Hospital respawn • -$200';
+}
+ for(let i=invPickups25.length-1;i>=0;i--){const m=invPickups25[i]; m.rotation.y+=dt*2; if(player.position.distanceTo(m.position)<2.5){pickup25(m.userData.invType);scene.remove(m);invPickups25.splice(i,1);}}
+ renderer.render(scene,camera);
+}
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+animate();
+</script>
+
+<style>
+#combatHud{position:fixed;left:12px;top:112px;z-index:20;background:rgba(0,0,0,.55);padding:8px 10px;border-radius:8px;font:14px Arial;color:#fff}
+#weaponBtn{position:fixed;right:16px;bottom:145px;z-index:25;background:rgba(20,20,20,.75);color:#fff;border:1px solid #aaa;border-radius:10px;padding:12px 14px;font-weight:bold}
+#reloadBtn{position:fixed;right:16px;bottom:95px;z-index:25;background:rgba(20,20,20,.75);color:#fff;border:1px solid #aaa;border-radius:10px;padding:12px 14px;font-weight:bold}
+</style>
+<div id="combatHud">Weapon: Pistol | Ammo: 12 | Enemies: 0</div>
+<button id="weaponBtn">Weapon</button>
+<button id="reloadBtn">Reload</button>
+<script>
+(function(){
+  const hud=document.getElementById('combatHud');
+  const wb=document.getElementById('weaponBtn'), rb=document.getElementById('reloadBtn');
+  let weapon='Pistol', ammo=12, cooldown=0, enemies=0;
+
+  function refresh(){
+    hud.textContent='Weapon: '+weapon+' | Ammo: '+ammo+' | Enemies: '+enemies;
+  }
+  window.__combat15={get weapon(){return weapon}, setEnemies(n){enemies=n;refresh()},
+    fire(){ if(cooldown>0 || ammo<=0)return false; ammo--; cooldown=.28; refresh(); return true; },
+    reload(){ammo=12;refresh()},
+    switchWeapon(){weapon=weapon==='Pistol'?'SMG':'Pistol';ammo=weapon==='SMG'?30:12;refresh()}
+  };
+  wb.addEventListener('click',()=>window.__combat15.switchWeapon());
+  rb.addEventListener('click',()=>window.__combat15.reload());
+  setInterval(()=>{if(cooldown>0)cooldown=Math.max(0,cooldown-.1)},100);
+  refresh();
+})();
+</script>
+
+
+<script>
+document.addEventListener('keydown', function(e){
+  if(e.key.toLowerCase()==='q' && window.__combat15) window.__combat15.switchWeapon();
+  if(e.key.toLowerCase()==='r' && window.__combat15 && !window.buildingInside) window.__combat15.reload();
+});
+</script>
+
+
+<style>
+#vehicleHud{position:fixed;left:12px;top:150px;z-index:20;background:rgba(0,0,0,.55);padding:8px 10px;border-radius:8px;font:14px Arial;color:#fff}
+#boostBtn{position:fixed;right:16px;bottom:195px;z-index:25;background:rgba(20,20,20,.75);color:#fff;border:1px solid #aaa;border-radius:10px;padding:12px 14px;font-weight:bold}
+</style>
+<div id="vehicleHud">Vehicle: On Foot | HP: 100 | Fuel: 100%</div>
+<button id="boostBtn">Boost</button>
+<script>
+(function(){
+ const hud=document.getElementById('vehicleHud'), btn=document.getElementById('boostBtn');
+ let hp=100,fuel=100,boost=false;
+ function update(){
+   let inside=window.carInside||window.bikeInside||window.boatInside;
+   let name=window.carInside?'Car':window.bikeInside?'Bike':window.boatInside?'Boat':'On Foot';
+   hud.textContent='Vehicle: '+name+' | HP: '+Math.round(hp)+' | Fuel: '+Math.round(fuel)+'%';
+ }
+ window.__vehicle16={
+   damage(n){hp=Math.max(0,hp-n);update();},
+   repair(){hp=100;fuel=100;update();},
+   refuel(){fuel=100;update();},
+   boost(){if(fuel>5){boost=true;fuel=Math.max(0,fuel-5);update();return true}return false},
+   tick(){if(boost){boost=false}}
+ };
+ btn.addEventListener('click',()=>window.__vehicle16.boost());
+ setInterval(()=>{
+   if(window.carInside||window.bikeInside||window.boatInside){
+     fuel=Math.max(0,fuel-.02);
+   }
+   update();
+ },500);
+ update();
+})();
+</script>
+
+
+<style>
+#missionHud17{position:fixed;left:12px;top:188px;z-index:20;background:rgba(0,0,0,.6);padding:8px 10px;border-radius:8px;font:14px Arial;color:#fff;max-width:240px}
+</style>
+<div id="missionHud17">🎯 Mission: None</div>
+<script>
+(function(){
+ const hud=document.getElementById('missionHud17');
+ let active=false, time=0, reward=0, target='';
+
+ const missions=[
+  {name:'Delivery Run',time:90,reward:500,target:'Harbor'},
+  {name:'Street Chase',time:75,reward:650,target:'Downtown'},
+  {name:'Getaway',time:60,reward:800,target:'Airport'}
+ ];
+ let index=0;
+
+ window.__missions17={
+   start(){
+     if(active)return false;
+     const m=missions[index%missions.length]; index++;
+     active=true; time=m.time; reward=m.reward; target=m.target;
+     hud.textContent='🎯 '+m.name+' → '+target+' | '+Math.ceil(time)+'s';
+     return true;
+   },
+   cancel(){active=false;hud.textContent='❌ Mission cancelled'},
+   complete(){
+     if(!active)return;
+     active=false;
+     hud.textContent='✅ Mission complete! +$'+reward;
+   },
+   tick(dt){
+     if(!active)return;
+     time-=dt;
+     if(time<=0){
+       active=false;
+       hud.textContent='❌ Mission failed';
+     }else{
+       const m=missions[(index-1)%missions.length];
+       hud.textContent='🎯 '+m.name+' → '+target+' | '+Math.ceil(time)+'s';
+     }
+   },
+   getState(){return {active,target,time,reward};}
+ };
+ setInterval(()=>window.__missions17.tick(.1),100);
+})();
+</script>
+
+
+<style>
+#minimap19{position:fixed;right:14px;top:58px;width:150px;height:150px;border:2px solid #fff8;border-radius:14px;background:#071018dd;z-index:30;box-shadow:0 4px 18px #0008}
+#mapTitle19{position:fixed;right:14px;top:39px;z-index:31;color:#fff;background:#000b;padding:3px 8px;border-radius:7px;font:11px Arial;font-weight:700}
+#waypoint19{position:fixed;left:12px;top:232px;z-index:20;background:#000b;color:#fff;padding:7px 9px;border-radius:8px;font:13px Arial;max-width:220px}
+</style>
+<div id="mapTitle19">MINI MAP</div><canvas id="minimap19" width="150" height="150"></canvas>
+<div id="waypoint19">📍 Waypoint: کوئی نہیں</div>
+<script>
+(function(){
+ const c=document.getElementById('minimap19'),ctx=c.getContext('2d'), wp=document.getElementById('waypoint19');
+ const scale=0.72, W=150,H=150;
+ const targets={Harbor:[105,120],Downtown:[0,0],Airport:[105,-10]};
+ function dot(x,z,color,r=3){const px=W/2+x*scale,py=H/2+z*scale; if(px>-5&&px<W+5&&py>-5&&py<H+5){ctx.fillStyle=color;ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);ctx.fill();}}
+ function draw(){
+   ctx.clearRect(0,0,W,H); ctx.fillStyle='#0b1820';ctx.fillRect(0,0,W,H);
+   ctx.strokeStyle='#ffffff14';ctx.lineWidth=1;
+   for(let x=15;x<150;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,150);ctx.stroke();}
+   for(let y=15;y<150;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(150,y);ctx.stroke();}
+   // main roads / city blocks
+   ctx.strokeStyle='#b7a47a66';ctx.lineWidth=5;
+   ctx.beginPath();ctx.moveTo(0,75);ctx.lineTo(150,75);ctx.moveTo(75,0);ctx.lineTo(75,150);ctx.stroke();
+   if(typeof player!=='undefined'){dot(player.position.x,player.position.z,'#45e6ff',5);}
+   if(typeof npcs!=='undefined') for(const n of npcs) dot(n.position.x,n.position.z,'#f2c94c',2);
+   if(typeof policeCars!=='undefined') for(const p of policeCars) dot(p.position.x,p.position.z,'#ff4b4b',3);
+   if(typeof traffic!=='undefined') for(const t of traffic) dot(t.position.x,t.position.z,'#cccccc',2);
+   let target=null,label='';
+   if(typeof window.__missions17!=='undefined' && window.__missions17.getState){const st=window.__missions17.getState(); if(st.active){label=st.target;target=targets[st.target]||null;}}
+   if(target){dot(target[0],target[1],'#ff66d9',6);wp.textContent='📍 '+label+' — Mission waypoint';}
+   else wp.textContent='📍 Waypoint: کوئی نہیں';
+   requestAnimationFrame(draw);
+ }
+ draw();
+})();
+</script>
+
+
+<style>
+#garage20{display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(330px,88vw);padding:18px;border-radius:18px;background:#111e;color:#fff;z-index:60;border:1px solid #fff4;box-shadow:0 12px 40px #000b;text-align:center;backdrop-filter:blur(8px)}
+#garage20 h3{margin:0 0 8px;font-size:20px}.g20row{display:flex;gap:8px;margin:9px 0}.g20row button{flex:1;border:0;border-radius:11px;padding:11px 8px;background:#fff;color:#111;font-weight:700}.g20row button:active{transform:scale(.97)}
+#garage20 .close20{background:#555;color:#fff}.g20small{font-size:12px;color:#ddd;margin:6px 0 12px}
+#garageBadge20{display:none;position:fixed;right:16px;top:214px;z-index:25;background:#000b;color:#fff;padding:7px 10px;border-radius:9px;font:12px Arial}
+</style>
+<div id="garage20">
+  <h3>🔧 GARAGE</h3>
+  <div class="g20small" id="garageStats20">Vehicle upgrade center</div>
+  <div class="g20row"><button id="paint20">🎨 Paint $100</button><button id="turbo20">⚡ Turbo $250</button></div>
+  <div class="g20row"><button id="repair20">🛠 Repair $100</button><button id="fuel20">⛽ Fuel $50</button></div>
+  <div class="g20row"><button class="close20" id="closeGarage20">Close</button></div>
+</div>
+<div id="garageBadge20">🔧 Garage upgrades: 0</div>
+<script>
+(function(){
+ const panel=document.getElementById('garage20'), stats=document.getElementById('garageStats20'), badge=document.getElementById('garageBadge20');
+ let paintLevel=0,turboLevel=0;
+ const paints=[0x2e6fa8,0xc0392b,0x27ae60,0xf1c40f,0x8e44ad,0xeeeeee];
+ function update(){
+   stats.textContent='Paint Lv.'+paintLevel+' • Turbo Lv.'+turboLevel+' • Cash $'+(typeof money!=='undefined'?money:0);
+   badge.textContent='🔧 Garage upgrades: '+turboLevel+' • Paint '+paintLevel;
+ }
+ function open(){
+   if(typeof buildingInside==='undefined'||!buildingInside||!currentBuilding||currentBuilding.userData.label!=='Garage'){
+     if(typeof dialogueTimer!=='undefined') dialogueTimer=2;
+     document.getElementById('buildingInfo').textContent='🔧 Garage: پہلے Garage کے اندر جائیں';
+     return;
+   }
+   panel.style.display='block'; update();
+ }
+ function close(){panel.style.display='none';}
+ document.getElementById('closeGarage20').onclick=close;
+ document.getElementById('paint20').onclick=function(){
+   if(money<100){stats.textContent='❌ $100 چاہیے';return;}
+   money-=100; paintLevel=(paintLevel+1)%paints.length;
+   if(typeof car!=='undefined'&&car.children[0]&&car.children[0].material) car.children[0].material.color.setHex(paints[paintLevel]);
+   document.getElementById('money').textContent='💵 $'+money; update();
+ };
+ document.getElementById('turbo20').onclick=function(){
+   if(money<250){stats.textContent='❌ $250 چاہیے';return;}
+   money-=250; turboLevel=Math.min(3,turboLevel+1);
+   document.getElementById('money').textContent='💵 $'+money; update();
+   document.getElementById('buildingInfo').textContent='⚡ Turbo upgrade Lv.'+turboLevel;
+ };
+ document.getElementById('repair20').onclick=function(){
+   if(money<100){stats.textContent='❌ $100 چاہیے';return;}
+   money-=100; vehicleHP=100; vehicleFuel=100;
+   if(window.__vehicle16&&window.__vehicle16.repair) window.__vehicle16.repair();
+   document.getElementById('money').textContent='💵 $'+money; document.getElementById('vehicleInfo').textContent='🔧 Vehicle repaired • HP 100 • Fuel 100%'; update();
+ };
+ document.getElementById('fuel20').onclick=function(){
+   if(money<50){stats.textContent='❌ $50 چاہیے';return;}
+   money-=50; vehicleFuel=100;
+   if(window.__vehicle16&&window.__vehicle16.refuel) window.__vehicle16.refuel();
+   document.getElementById('money').textContent='💵 $'+money; document.getElementById('vehicleInfo').textContent='⛽ Fuel filled • 100%'; update();
+ };
+ window.__garage20={open,close,getState:()=>({paintLevel,turboLevel})};
+ window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='g')open();if(e.key==='Escape')close();});
+ setInterval(()=>{badge.style.display=(typeof buildingInside!=='undefined'&&buildingInside&&currentBuilding&&currentBuilding.userData.label==='Garage')?'block':'none';},300);
+})();
+</script>
+
+<script>
+(function(){
+ const KEY='openCityGameSaveV23', status=document.getElementById('saveStatus22');
+ function msg(t){status.textContent=t;clearTimeout(window.__svt);window.__svt=setTimeout(()=>status.textContent='💾 Save system ready',1800)}
+ function val(n,d){try{return typeof window[n]!=='undefined'?window[n]:d}catch(e){return d}}
+ function save(){const d={version:23,money:val('money',0),vehicleHP:val('vehicleHP',100),vehicleFuel:val('vehicleFuel',100),weather:val('weather','clear'),gameClock:val('gameClock',480),dayCount:val('dayCount',1),garage:window.__garage20&&window.__garage20.getState?window.__garage20.getState():{},x:(typeof car!=='undefined'&&car.position)?car.position.x:0,z:(typeof car!=='undefined'&&car.position)?car.position.z:0,time:Date.now()};localStorage.setItem(KEY,JSON.stringify(d));msg('✅ Game saved')}
+ function load(){const r=localStorage.getItem(KEY);if(!r){msg('⚠️ No save found');return}try{const d=JSON.parse(r);if(typeof money!=='undefined'){money=d.money||0;const m=document.getElementById('money');if(m)m.textContent='💵 $'+money}if(typeof vehicleHP!=='undefined')vehicleHP=d.vehicleHP??100;if(typeof vehicleFuel!=='undefined')vehicleFuel=d.vehicleFuel??100;if(typeof gameClock!=='undefined')gameClock=d.gameClock??gameClock;if(typeof dayCount!=='undefined')dayCount=d.dayCount??dayCount;if(typeof cycleWeather==='function'&&d.weather&&typeof weather!=='undefined'&&weather!==d.weather){let guard=0;while(weather!==d.weather&&guard<3){cycleWeather();guard++}}if(typeof car!=='undefined'&&car.position){car.position.x=d.x||0;car.position.z=d.z||0}msg('📂 Game loaded')}catch(e){msg('❌ Save corrupted')}}
+ function reset(){if(!confirm('Reset saved game?'))return;localStorage.removeItem(KEY);msg('🗑️ Save deleted')}
+ document.getElementById('saveBtn22').onclick=save;document.getElementById('loadBtn22').onclick=load;document.getElementById('resetBtn22').onclick=reset;
+ window.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='s'){e.preventDefault();save()}});
+})();
+</script>
+
+<style>
+#autoSave23{position:fixed;right:16px;top:255px;z-index:25;background:#000b;color:#fff;padding:7px 10px;border-radius:9px;font:12px Arial;display:none}
+</style>
+<div id="autoSave23">💾 Auto-save: ON</div>
+<script>
+(function(){
+ const el=document.getElementById('autoSave23');
+ function autosave(){
+   try{
+     const d={version:23,money:typeof money!=='undefined'?money:0,vehicleHP:typeof vehicleHP!=='undefined'?vehicleHP:100,vehicleFuel:typeof vehicleFuel!=='undefined'?vehicleFuel:100,weather:typeof weather!=='undefined'?weather:'clear',gameClock:typeof gameClock!=='undefined'?gameClock:480,dayCount:typeof dayCount!=='undefined'?dayCount:1,x:(typeof car!=='undefined'&&car.position)?car.position.x:0,z:(typeof car!=='undefined'&&car.position)?car.position.z:0,garage:window.__garage20&&window.__garage20.getState?window.__garage20.getState():{}};
+     localStorage.setItem('openCityGameAutoSaveV23',JSON.stringify(d));
+     el.textContent='💾 Auto-saved'; el.style.display='block'; clearTimeout(window.__as23); window.__as23=setTimeout(()=>el.style.display='none',1500);
+   }catch(e){}
+ }
+ setInterval(autosave,30000);
+ window.addEventListener('beforeunload',autosave);
+})();
+</script>
+
+<style>
+#safehouse24{position:fixed;left:12px;top:285px;z-index:25;background:#000b;color:#fff;padding:7px 10px;border-radius:9px;font:12px Arial;display:none;max-width:235px}
+</style>
+<div id="safehouse24">🏠 Safehouse nearby — E to enter • R to rest/save</div>
+<script>
+(function(){
+ const el=document.getElementById('safehouse24');
+ setInterval(()=>{
+   let show=false;
+   try{
+     if(typeof safehouse!=='undefined' && typeof player!=='undefined' && !buildingInside){
+       show=player.position.distanceTo(safehouse.position)<15;
+     }
+   }catch(e){}
+   el.style.display=show?'block':'none';
+ },250);
+})();
+</script>
+
+
+<style>
+#finalHud{position:fixed;right:12px;top:110px;z-index:60;color:#fff;background:#000b;border:1px solid #ffffff33;border-radius:12px;padding:8px 10px;font:12px Arial;min-width:170px}
+#finalMenu{position:fixed;inset:0;background:#0009;z-index:100;display:none;align-items:center;justify-content:center;font-family:Arial}
+#finalPanel{width:min(92vw,430px);max-height:82vh;overflow:auto;background:#111;color:#fff;border:1px solid #ffffff33;border-radius:18px;padding:18px;box-shadow:0 18px 60px #000}
+#finalPanel h2{margin:0 0 10px}.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.fgrid button{padding:11px;border:0;border-radius:10px;background:#2b2b2b;color:#fff;font-weight:700}.fgrid button:active{transform:scale(.98)}
+#finalToast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:110;background:#111e;color:#fff;padding:10px 15px;border-radius:12px;display:none;font-weight:700}
+#weaponWheel{position:fixed;inset:0;z-index:105;display:none;align-items:center;justify-content:center;background:#0006;color:#fff;font-family:Arial}
+#weaponWheel .ww{width:270px;height:270px;border-radius:50%;background:#111d;border:2px solid #fff5;display:grid;place-items:center;position:relative}
+.wwb{position:absolute;padding:10px 14px;border:0;border-radius:10px;background:#222;color:#fff;font-weight:700}.ww1{top:12px}.ww2{right:5px;top:125px}.ww3{left:5px;top:125px}.ww4{bottom:12px}
+</style>
+<div id="finalHud">🏠 Home: Ready<br>🚗 Owned Cars: 1<br>🏍️ Bike: 1<br>🔫 Armory: Ready<br>📱 Phone: M</div>
+<div id="finalMenu"><div id="finalPanel"><h2>🌴 Open City — Player Hub</h2><div id="finalStats"></div><hr><div class="fgrid"><button id="homeBtnF">🏠 Safehouse</button><button id="garageBtnF">🚗 Garage</button><button id="armoryBtnF">🔫 Armory</button><button id="shopBtnF">🛒 Shops</button><button id="clothesBtnF">👕 Outfit</button><button id="radioBtnF">📻 Radio</button><button id="mapBtnF">🗺️ City Map</button><button id="saveBtnF">💾 Save</button></div><br><button id="closeFinal" style="width:100%;padding:11px;border:0;border-radius:10px">Close</button></div></div>
+<div id="finalToast"></div>
+<div id="weaponWheel"><div class="ww"><b>WEAPONS</b><button class="wwb ww1" data-w="pistol">🔫 Pistol</button><button class="wwb ww2" data-w="smg">🔫 SMG</button><button class="wwb ww3" data-w="shotgun">💥 Shotgun</button><button class="wwb ww4" data-w="unarmed">✋ Unarmed</button></div></div>
+<script>
+(function(){
+ const toast=document.getElementById('finalToast'), menu=document.getElementById('finalMenu'), stats=document.getElementById('finalStats');
+ let radioOn=false, weapon='pistol', outfit=0;
+ const owned={redCar:null,bike:null};
+ function say(t){toast.textContent=t;toast.style.display='block';clearTimeout(window.__ft);window.__ft=setTimeout(()=>toast.style.display='none',2200)}
+ function target(){return (typeof inCar!=='undefined'&&inCar)?((typeof vehicleType!=='undefined'&&vehicleType==='bike'&&typeof bike!=='undefined')?bike:car):player}
+ function dist(o){return target().position.distanceTo(o.position)}
+ function obj(x,z,color,name){const g=new THREE.Group();const b=new THREE.Mesh(new THREE.BoxGeometry(3,1.1,5),new THREE.MeshStandardMaterial({color,metalness:.25,roughness:.55}));b.position.y=.7;g.add(b);g.position.set(x,.05,z);g.userData.name=name;scene.add(g);return g}
+ // Original personal fleet: red sports car and a second motorcycle parked at the player's safehouse.
+ const red=obj(9,-7,0xc92828,'Owned Red Car'); red.scale.set(1.05,.75,1); owned.redCar=red;
+ const bike2=obj(13,-5,0x20252a,'Owned Motorcycle'); bike2.scale.set(.55,.55,.9); owned.bike=bike2;
+ // Safehouse upgrades/interior markers. Existing Step 24 safehouse remains untouched.
+ const safeRoom=new THREE.Group();
+ function wall(x,y,z,w,h,d){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color:0x8c6b52}));m.position.set(x,y,z);m.castShadow=true;safeRoom.add(m)}
+ wall(0,2,-4,16,4,.3);wall(-8,2,0,.3,4,8);wall(8,2,0,.3,4,8);safeRoom.position.set(0,0,-12);scene.add(safeRoom);
+ const bed=new THREE.Mesh(new THREE.BoxGeometry(3,.7,5),new THREE.MeshStandardMaterial({color:0x263a70}));bed.position.set(-4,.4,-10);scene.add(bed);
+ const locker=new THREE.Mesh(new THREE.BoxGeometry(2,3,1),new THREE.MeshStandardMaterial({color:0x33383d}));locker.position.set(4,1.5,-15.5);scene.add(locker);locker.userData.armory=true;
+ function panel(t){stats.innerHTML='💵 Money: $'+(typeof money!=='undefined'?money:0)+'<br>❤️ Health: '+(typeof health!=='undefined'?health:100)+'<br>🛡️ Armor: '+(typeof armor!=='undefined'?armor:0)+'<br>🔫 Weapon: '+weapon+'<br>🏠 Safehouse: Owned';say(t)}
+ function open(){panel('Player hub opened');menu.style.display='flex'}
+ document.getElementById('closeFinal').onclick=()=>menu.style.display='none';
+ document.getElementById('homeBtnF').onclick=()=>{menu.style.display='none';say('🏠 Safehouse ready — rest, save and change equipment here')};
+ document.getElementById('garageBtnF').onclick=()=>{menu.style.display='none';say('🚗 Garage: Red sports car + motorcycle are owned')};
+ document.getElementById('armoryBtnF').onclick=()=>{menu.style.display='none';document.getElementById('weaponWheel').style.display='flex'};
+ document.getElementById('shopBtnF').onclick=()=>{menu.style.display='none';say('🛒 City shops: ammo, repairs, fuel and upgrades')};
+ document.getElementById('clothesBtnF').onclick=()=>{outfit=(outfit+1)%3;player.traverse(o=>{if(o.material&&o.material.color)o.material.color.setHex([0x4d8060,0x263b72,0x6b263b][outfit])});say('👕 Outfit changed')};
+ document.getElementById('radioBtnF').onclick=()=>{radioOn=!radioOn;say(radioOn?'📻 Radio ON — city ambience':'📻 Radio OFF')};
+ document.getElementById('mapBtnF').onclick=()=>{menu.style.display='none';say('🗺️ City: Downtown • Harbor • Airport • Bridge • Police • Hospital • Garage')};
+ document.getElementById('saveBtnF').onclick=()=>{menu.style.display='none';if(typeof saveGame==='function')saveGame();else localStorage.setItem('openCityFinalSave',JSON.stringify({money:typeof money!=='undefined'?money:0}));say('💾 Final build save complete')};
+ document.querySelectorAll('.wwb').forEach(b=>b.onclick=()=>{weapon=b.dataset.w;document.getElementById('weapon').textContent='🔫 '+weapon.toUpperCase()+' • Ammo: '+(typeof ammo!=='undefined'?ammo:0);document.getElementById('weaponWheel').style.display='none';say('🔫 Equipped: '+weapon)});
+ window.addEventListener('keydown',e=>{
+   if(e.key.toLowerCase()==='m'){open()}
+   if(e.key.toLowerCase()==='q')document.getElementById('weaponWheel').style.display='flex';
+   if(e.key==='Escape'){menu.style.display='none';document.getElementById('weaponWheel').style.display='none'}
+ });
+ // Personal vehicle spawning/entering: place the owned red car and bike near the safehouse; use H to swap/recall.
+ function recallRed(){red.position.copy(player.position);red.position.x+=3;red.position.z-=4;red.visible=true;say('🚗 Red car recalled to your location')}
+ function recallBike(){bike2.position.copy(player.position);bike2.position.x-=3;bike2.position.z-=4;bike2.visible=true;say('🏍️ Motorcycle recalled to your location')}
+ window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='h'){if(e.shiftKey)recallBike();else recallRed()}});
+ // Civilian ambience: extra original pedestrians with simple wandering behavior.
+ const extras=[]; for(let i=0;i<12;i++){const n=new THREE.Group();const body=new THREE.Mesh(new THREE.CapsuleGeometry(.25,.8,4,8),new THREE.MeshStandardMaterial({color:[0x5c8a72,0x9a694f,0x586b8e][i%3]}));body.position.y=.7;n.add(body);n.position.set(-130+(i*23)%250,0,-120+(i*37)%240);n.userData.v=(i%2?1:-1)*(1+i%3)*.7;scene.add(n);extras.push(n)}
+ function tick(dt){for(const n of extras){n.position.x+=n.userData.v*dt;if(n.position.x>145||n.position.x<-145)n.userData.v*=-1;n.rotation.y=n.userData.v>0?Math.PI/2:-Math.PI/2}}
+ const oldAnim=window.__finalTickers||[];oldAnim.push(tick);window.__finalTickers=oldAnim;
+ // Add a final save snapshot with player-owned fleet state.
+ setInterval(()=>{try{localStorage.setItem('openCityFinalFleet',JSON.stringify({red:true,bike:true,weapon,outfit,radioOn}))}catch(e){}},30000);
+ // Hook into the existing animation loop without replacing it.
+ const oldRAF=window.requestAnimationFrame; // marker for diagnostics only
+ const ticker=setInterval(()=>{const dt=.05;for(const f of window.__finalTickers||[])f(dt)},50);
+ window.__finalBuild={open,recallRed,recallBike,owned,version:'FINAL'};
+})();
+</script>
+
+</body>
+</html>
