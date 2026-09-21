@@ -1,35 +1,33 @@
+html>
 <!doctype html>
 <html lang="ur">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>GTA Vice City True Style</title>
+<title>GTA Vice City - Web Edition</title>
 <style>
 html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:Arial,sans-serif;user-select:none}
 #game{display:block;width:100vw;height:100vh;touch-action:none}
 
-/* Action Buttons */
-.btn{position:fixed;z-index:10;border-radius:50%;border:2px solid #fff;font-weight:bold;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,0.7);touch-action:none}
-#runBtn{left:25px;bottom:30px;width:75px;height:75px;background:#e84393;font-size:15px} /* Vice City Pink */
-#carBtn{right:25px;bottom:25px;width:70px;height:70px;background:#0984e3;font-size:12px}
-#doorBtn{left:50%;bottom:30px;transform:translateX(-50%);padding:12px 24px;background:#fdcb6e;color:#000;border-radius:20px;border:2px solid #fff;font-weight:bold;display:none;z-index:10}
+/* Compact Mobile Controls */
+.btn{position:fixed;z-index:10;border-radius:50%;border:2px solid rgba(255,255,255,0.8);font-weight:bold;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,0.5);touch-action:none;display:flex;align-items:center;justify-content:center}
+#runBtn{left:20px;bottom:20px;width:48px;height:48px;background:rgba(232,67,147,0.85);font-size:10px}
+#carBtn{right:20px;bottom:20px;width:54px;height:54px;background:rgba(9,132,227,0.85);font-size:10px}
 
-/* Vehicle Drive Controls */
-.car-steer-group{position:fixed;left:20px;bottom:30px;z-index:10;display:none;gap:15px}
-.car-accel-group{position:fixed;right:20px;bottom:30px;z-index:10;display:none;flex-direction:column;gap:15px}
-.c-btn{width:65px;height:65px;border-radius:15px;border:2px solid #fff;background:rgba(20,20,20,0.85);color:#fff;font-size:24px;font-weight:bold;touch-action:none}
+/* Driving UI Buttons */
+.car-steer-group{position:fixed;left:15px;bottom:20px;z-index:10;display:none;gap:8px}
+.car-accel-group{position:fixed;right:15px;bottom:20px;z-index:10;display:none;flex-direction:column;gap:8px}
+.c-btn{width:48px;height:48px;border-radius:10px;border:2px solid rgba(255,255,255,0.8);background:rgba(20,20,20,0.75);color:#fff;font-size:16px;font-weight:bold;touch-action:none}
 </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
 
-<!-- Buttons -->
+<!-- Mobile Touch Controls -->
 <button class="btn" id="runBtn">🏃 RUN</button>
 <button class="btn" id="carBtn">🚗 ENTER</button>
-<button id="doorBtn">🚪 OPEN DOOR</button>
 
-<!-- Driving Controls -->
 <div class="car-steer-group" id="steerGroup">
   <button class="c-btn" id="cLeft">⬅️</button>
   <button class="c-btn" id="cRight">➡️</button>
@@ -44,164 +42,163 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:Arial
 
 <script>
 window.addEventListener('DOMContentLoaded', () => {
+    // 1. RENDERER & SCENE SETUP
     const canvas = document.getElementById('game');
     const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x74b9ff); // Vice City Sky Blue
+    scene.background = new THREE.Color(0x74b9ff); // Vice City Daylight Sky
+    scene.fog = new THREE.FogExp2(0x74b9ff, 0.002);
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-    // Sun & Lighting
-    const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1.4);
-    scene.add(light);
+    // Lighting (Vice City Golden Sun)
+    const ambientLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
+    scene.add(ambientLight);
+
     const sun = new THREE.DirectionalLight(0xfffae0, 1.5);
     sun.position.set(150, 200, 100);
+    sun.castShadow = true;
     scene.add(sun);
 
-    // 1. OCEAN (Vice City Beach Water)
-    const ocean = new THREE.Mesh(new THREE.PlaneGeometry(1200, 1200), new THREE.MeshLambertMaterial({ color: 0x00cec9 }));
+    const colliders = [];
+
+    // 2. WORLD ENVIRONMENT & ROAD NETWORK
+    const ocean = new THREE.Mesh(
+        new THREE.PlaneGeometry(1500, 1500),
+        new THREE.MeshLambertMaterial({ color: 0x00cec9 })
+    );
     ocean.rotation.x = -Math.PI / 2;
     ocean.position.y = -0.5;
     scene.add(ocean);
 
-    // 2. VICE CITY ISLANDS
-    const island1 = new THREE.Mesh(new THREE.BoxGeometry(450, 2, 800), new THREE.MeshLambertMaterial({ color: 0x55efc4 }));
-    island1.position.set(-250, 0, 0); scene.add(island1);
-
-    const island2 = new THREE.Mesh(new THREE.BoxGeometry(450, 2, 800), new THREE.MeshLambertMaterial({ color: 0x55efc4 }));
-    island2.position.set(250, 0, 0); scene.add(island2);
-
-    // 3. MAIN BRIDGE
-    const bridge = new THREE.Mesh(new THREE.BoxGeometry(100, 3, 40), new THREE.MeshLambertMaterial({ color: 0x636e72 }));
-    bridge.position.set(0, 1.5, 0); scene.add(bridge);
+    const mainGround = new THREE.Mesh(
+        new THREE.BoxGeometry(800, 2, 800),
+        new THREE.MeshLambertMaterial({ color: 0x55efc4 })
+    );
+    mainGround.position.set(0, 0, 0);
+    scene.add(mainGround);
 
     // Roads
-    const road1 = new THREE.Mesh(new THREE.PlaneGeometry(30, 800), new THREE.MeshLambertMaterial({ color: 0x2d3436 }));
-    road1.rotation.x = -Math.PI / 2; road1.position.set(-200, 1.1, 0); scene.add(road1);
+    const roadMat = new THREE.MeshLambertMaterial({ color: 0x2d3436 });
+    const mainRoad = new THREE.Mesh(new THREE.PlaneGeometry(40, 780), roadMat);
+    mainRoad.rotation.x = -Math.PI / 2;
+    mainRoad.position.set(-150, 1.1, 0);
+    scene.add(mainRoad);
 
-    const road2 = new THREE.Mesh(new THREE.PlaneGeometry(30, 800), new THREE.MeshLambertMaterial({ color: 0x2d3436 }));
-    road2.rotation.x = -Math.PI / 2; road2.position.set(200, 1.1, 0); scene.add(road2);
+    // Palm Tree Generator (Vice City Ocean Drive Style)
+    function createPalmTree(x, z) {
+        const treeGroup = new THREE.Group();
+        const trunkGeo = new THREE.CylinderGeometry(0.3, 0.5, 8, 8);
+        const trunkMat = new THREE.MeshLambertMaterial({ color: 0x8e583c });
+        const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+        trunk.position.y = 4;
+        treeGroup.add(trunk);
 
-    // 4. VICE CITY BUILDINGS (Ocean Drive Style Colors: Pink, Cyan, Yellow, White)
-    const vcColors = [0xfd79a8, 0x81ecec, 0xffebe9, 0xfffe6a, 0xa29bfe];
-    for (let i = -350; i < 350; i += 70) {
-        if(Math.abs(i) < 40) continue;
-        
-        const h1 = 25 + Math.random() * 35;
-        const b1 = new THREE.Mesh(new THREE.BoxGeometry(35, h1, 35), new THREE.MeshLambertMaterial({ color: vcColors[Math.floor(Math.random()*vcColors.length)] }));
-        b1.position.set(-270, h1/2 + 1, i);
-        scene.add(b1);
-
-        const h2 = 25 + Math.random() * 35;
-        const b2 = new THREE.Mesh(new THREE.BoxGeometry(35, h2, 35), new THREE.MeshLambertMaterial({ color: vcColors[Math.floor(Math.random()*vcColors.length)] }));
-        b2.position.set(270, h2/2 + 1, i);
-        scene.add(b2);
+        const leafMat = new THREE.MeshLambertMaterial({ color: 0x10ac84 });
+        for (let i = 0; i < 5; i++) {
+            const leaf = new THREE.Mesh(new THREE.BoxGeometry(4, 0.1, 1.2), leafMat);
+            leaf.position.set(0, 8, 0);
+            leaf.rotation.y = (Math.PI / 2.5) * i;
+            leaf.rotation.z = 0.3;
+            treeGroup.add(leaf);
+        }
+        treeGroup.position.set(x, 1, z);
+        scene.add(treeGroup);
+        colliders.push(new THREE.Box3().setFromObject(trunk));
     }
 
-    // 5. PLAYER SAFEHOUSE & STAIRS
-    const houseGroup = new THREE.Group();
-    houseGroup.position.set(-160, 1, -100);
-
-    const houseWall = new THREE.Mesh(new THREE.BoxGeometry(30, 16, 25), new THREE.MeshLambertMaterial({ color: 0xfab1a0 }));
-    houseWall.position.set(0, 8, 0); houseGroup.add(houseWall);
-
-    for(let i=0; i<5; i++){
-        const step = new THREE.Mesh(new THREE.BoxGeometry(10, 0.6, 1.5), new THREE.MeshLambertMaterial({ color: 0xdfe6e9 }));
-        step.position.set(0, i*0.6 + 0.3, 12.5 + (i*1.4));
-        houseGroup.add(step);
+    for (let z = -350; z <= 350; z += 50) {
+        createPalmTree(-125, z);
     }
 
-    const doorPivot = new THREE.Group();
-    doorPivot.position.set(-2.5, 1, 12.5);
-    const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(5, 8, 0.4), new THREE.MeshLambertMaterial({ color: 0x6c5ce7 }));
-    doorMesh.position.set(2.5, 4, 0);
-    doorPivot.add(doorMesh);
-    houseGroup.add(doorPivot);
-    scene.add(houseGroup);
+    // 3. GTA VICE CITY SAFEHOUSE (Ocean View Hotel)
+    const hotel = new THREE.Group();
+    hotel.position.set(-90, 1, -100);
 
-    let isDoorOpen = false;
+    const hotelBody = new THREE.Mesh(
+        new THREE.BoxGeometry(40, 30, 30),
+        new THREE.MeshLambertMaterial({ color: 0xfab1a0 })
+    );
+    hotelBody.position.y = 15;
+    hotel.add(hotelBody);
 
-    // 6. HELICOPTER ON ROOFTOP
-    const heliGroup = new THREE.Group();
-    const hBody = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 16), new THREE.MeshLambertMaterial({ color: 0xfdcb6e }));
-    const hRotor = new THREE.Mesh(new THREE.BoxGeometry(12, 0.1, 0.8), new THREE.MeshLambertMaterial({ color: 0x2d3436 }));
-    hRotor.position.y = 3.2;
-    heliGroup.add(hBody); heliGroup.add(hRotor);
-    heliGroup.position.set(-160, 19, -100);
-    scene.add(heliGroup);
+    const hotelSign = new THREE.Mesh(
+        new THREE.BoxGeometry(28, 5, 2),
+        new THREE.MeshLambertMaterial({ color: 0xe84393 })
+    );
+    hotelSign.position.set(0, 32, 14);
+    hotel.add(hotelSign);
 
-    // 7. SPORTS CAR
-    const car = new THREE.Group();
-    const cBase = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.0, 5.2), new THREE.MeshLambertMaterial({ color: 0xd63031 }));
-    cBase.position.y = 0.5; car.add(cBase);
-    const cTop = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 2.6), new THREE.MeshLambertMaterial({ color: 0x2d3436 }));
-    cTop.position.set(0, 1.3, -0.2); car.add(cTop);
-    car.position.set(-185, 1.5, -80);
-    scene.add(car);
-
-    let carSpeed = 0;
-    const maxSpeed = 1.2, accel = 0.02, friction = 0.96;
-
-    // 8. TRAFFIC CARS
-    const trafficCars = [];
-    const carColors = [0xd63031, 0x00b894, 0xfdcb6e, 0x0984e3, 0x6c5ce7];
-
-    function createTrafficCar(x, z, dir) {
-        const tCar = new THREE.Group();
-        const col = carColors[Math.floor(Math.random() * carColors.length)];
-        const body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.9, 4.8), new THREE.MeshLambertMaterial({ color: col }));
-        body.position.y = 0.45; tCar.add(body);
-        const top = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.7, 2.2), new THREE.MeshLambertMaterial({ color: 0x2d3436 }));
-        top.position.set(0, 1.2, -0.1); tCar.add(top);
-        tCar.position.set(x, 1.5, z);
-        tCar.userData = { speed: 0.35 + Math.random() * 0.2, direction: dir };
-        scene.add(tCar);
-        trafficCars.push(tCar);
+    // Hotel Entrance Stairs
+    for (let i = 0; i < 5; i++) {
+        const step = new THREE.Mesh(
+            new THREE.BoxGeometry(16, 0.6, 2),
+            new THREE.MeshLambertMaterial({ color: 0xdfe6e9 })
+        );
+        step.position.set(0, i * 0.6 + 0.3, 15 + (i * 1.8));
+        hotel.add(step);
     }
+    scene.add(hotel);
+    colliders.push(new THREE.Box3().setFromObject(hotelBody));
 
-    for(let i = 0; i < 10; i++) {
-        const posX = (i % 2 === 0) ? -200 : 200;
-        createTrafficCar(posX + (i%2===0 ? 5 : -5), -350 + (i * 70), i % 2 === 0 ? 1 : -1);
-    }
-
-    // 9. PLAYER CHARACTER (Tommy Vercetti Cyan Shirt)
+    // 4. CHARACTERS & VEHICLES
+    // Player (Tommy Vercetti Style)
     const player = new THREE.Group();
-    const pBody = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.2, 0.9), new THREE.MeshLambertMaterial({ color: 0x00cec9 }));
-    pBody.position.y = 1.1; player.add(pBody);
-    const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 12), new THREE.MeshLambertMaterial({ color: 0xffeaa7 }));
-    pHead.position.y = 2.4; player.add(pHead);
-    player.position.set(-160, 1.5, -80);
+    const pBody = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.0, 0.8), new THREE.MeshLambertMaterial({ color: 0x00cec9 }));
+    pBody.position.y = 1.0; player.add(pBody);
+    const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.4, 12, 12), new THREE.MeshLambertMaterial({ color: 0xffeaa7 }));
+    pHead.position.y = 2.2; player.add(pHead);
+    player.position.set(-100, 1.0, -80);
     scene.add(player);
 
+    // Player Sports Car (Infernus Style)
+    const car = new THREE.Group();
+    const cBase = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.1, 5.2), new THREE.MeshLambertMaterial({ color: 0xd63031 }));
+    cBase.position.y = 0.55; car.add(cBase);
+    const cCabin = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.7, 2.6), new THREE.MeshLambertMaterial({ color: 0x2d3436 }));
+    cCabin.position.set(0, 1.3, -0.2); car.add(cCabin);
+    car.position.set(-135, 1.0, -80);
+    scene.add(car);
+
+    // Dynamic Traffic Simulation
+    const trafficCars = [];
+    function spawnTraffic(x, z, dir) {
+        const tCar = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.1, 5.0), new THREE.MeshLambertMaterial({ color: 0xfdcb6e }));
+        body.position.y = 0.55; tCar.add(body);
+        tCar.position.set(x, 1.0, z);
+        scene.add(tCar);
+        return { mesh: tCar, speed: 0.4, dir: dir, box: new THREE.Box3() };
+    }
+    for (let i = 0; i < 5; i++) {
+        trafficCars.push(spawnTraffic(-158 + (i % 2 === 0 ? 8 : -8), -300 + i * 140, i % 2 === 0 ? 1 : -1));
+    }
+
+    // 5. PHYSICS & CONTROLS SYSTEM
     let inCar = false, isRunning = false;
-    let cameraYaw = 0, cameraPitch = 0.3;
+    let carSpeed = 0, carRoll = 0;
+    const maxSpeed = 1.3, accel = 0.025, friction = 0.94;
+    let cameraYaw = 0, cameraPitch = 0.25;
+
     const carInput = { up: false, down: false, left: false, right: false };
 
-    // --- FIX FOR MULTI-TOUCH CAMERA FLIP WHILE RUNNING ---
-    let cameraTouchId = null;
-    let lastX = 0, lastY = 0;
-
+    // Touch & Multi-Touch Camera Control
+    let cameraTouchId = null, lastX = 0, lastY = 0;
     const runBtn = document.getElementById('runBtn');
-    runBtn.addEventListener('touchstart', (e) => { 
-        e.preventDefault(); 
-        isRunning = true; 
-    }, {passive: false});
 
-    runBtn.addEventListener('touchend', (e) => { 
-        e.preventDefault(); 
-        isRunning = false; 
-    }, {passive: false});
+    runBtn.addEventListener('touchstart', (e) => { e.preventDefault(); isRunning = true; }, {passive: false});
+    runBtn.addEventListener('touchend', (e) => { e.preventDefault(); isRunning = false; }, {passive: false});
 
     window.addEventListener('touchstart', (e) => {
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];
-            if (touch.target !== runBtn && !touch.target.classList.contains('c-btn') && touch.target !== carBtn && touch.target !== doorBtn) {
+            if (touch.target !== runBtn && !touch.target.classList.contains('c-btn') && touch.target !== carBtn) {
                 cameraTouchId = touch.identifier;
-                lastX = touch.clientX;
-                lastY = touch.clientY;
+                lastX = touch.clientX; lastY = touch.clientY;
                 break;
             }
         }
@@ -214,22 +211,19 @@ window.addEventListener('DOMContentLoaded', () => {
                 const dx = touch.clientX - lastX;
                 const dy = touch.clientY - lastY;
                 cameraYaw -= dx * 0.008;
-                cameraPitch = Math.max(-0.4, Math.min(1.2, cameraPitch + dy * 0.008));
-                lastX = touch.clientX;
-                lastY = touch.clientY;
+                cameraPitch = Math.max(-0.1, Math.min(0.85, cameraPitch + dy * 0.008));
+                lastX = touch.clientX; lastY = touch.clientY;
             }
         }
     });
 
     window.addEventListener('touchend', (e) => {
         for (let i = 0; i < e.changedTouches.length; i++) {
-            if (e.changedTouches[i].identifier === cameraTouchId) {
-                cameraTouchId = null;
-            }
+            if (e.changedTouches[i].identifier === cameraTouchId) cameraTouchId = null;
         }
     });
 
-    // Driving Controls Setup
+    // Vehicle Driving Input Setup
     const setupBtn = (id, key) => {
         const btn = document.getElementById(id);
         btn.addEventListener('touchstart', (e) => { e.preventDefault(); carInput[key] = true; }, {passive: false});
@@ -238,79 +232,121 @@ window.addEventListener('DOMContentLoaded', () => {
     setupBtn('cUp', 'up'); setupBtn('cDown', 'down');
     setupBtn('cLeft', 'left'); setupBtn('cRight', 'right');
 
-    // Vehicle Enter/Exit
     const carBtn = document.getElementById('carBtn');
     const steerGroup = document.getElementById('steerGroup');
     const accelGroup = document.getElementById('accelGroup');
 
     carBtn.addEventListener('click', () => {
-        if (!inCar && player.position.distanceTo(car.position) < 10) {
-            inCar = true; player.visible = false;
-            carBtn.textContent = '🚶 EXIT'; runBtn.style.display = 'none';
-            steerGroup.style.display = 'flex'; accelGroup.style.display = 'flex';
+        if (!inCar && player.position.distanceTo(car.position) < 8) {
+            inCar = true;
+            player.visible = false;
+            carBtn.textContent = '🚶 EXIT';
+            runBtn.style.display = 'none';
+            steerGroup.style.display = 'flex';
+            accelGroup.style.display = 'flex';
+            cameraYaw = car.rotation.y;
         } else if (inCar) {
-            inCar = false; player.position.copy(car.position); player.position.x += 4; player.visible = true;
-            carBtn.textContent = '🚗 ENTER'; runBtn.style.display = 'block';
-            steerGroup.style.display = 'none'; accelGroup.style.display = 'none';
+            inCar = false;
+            player.position.copy(car.position);
+            player.position.x += 3.5;
+            player.visible = true;
+            carBtn.textContent = '🚗 ENTER';
+            runBtn.style.display = 'flex';
+            steerGroup.style.display = 'none';
+            accelGroup.style.display = 'none';
         }
     });
 
-    // Door Open/Close Action
-    const doorBtn = document.getElementById('doorBtn');
-    doorBtn.addEventListener('click', () => {
-        isDoorOpen = !isDoorOpen;
-        doorPivot.rotation.y = isDoorOpen ? -Math.PI / 2 : 0;
-    });
+    // Collision Detection Logic
+    function checkCollision(nextPos, radius) {
+        const pBox = new THREE.Box3(
+            new THREE.Vector3(nextPos.x - radius, 0, nextPos.z - radius),
+            new THREE.Vector3(nextPos.x + radius, 4, nextPos.z + radius)
+        );
+        for (let box of colliders) {
+            if (pBox.intersectsBox(box)) return true;
+        }
+        for (let tc of trafficCars) {
+            if (pBox.intersectsBox(tc.box)) return true;
+        }
+        return false;
+    }
 
-    // MAIN GAME ANIMATION LOOP
+    // 6. MAIN GAME ENGINE LOOP
     function animate() {
         requestAnimationFrame(animate);
 
-        hRotor.rotation.y += 0.25;
-
-        // Traffic AI
+        // Traffic AI Movement Physics
         trafficCars.forEach(tc => {
-            tc.position.z += tc.userData.speed * tc.userData.direction;
-            if(tc.position.z > 380) tc.position.z = -380;
-            if(tc.position.z < -380) tc.position.z = 380;
+            tc.mesh.position.z += tc.speed * tc.dir;
+            if (tc.mesh.position.z > 380) tc.mesh.position.z = -380;
+            if (tc.mesh.position.z < -380) tc.mesh.position.z = 380;
+            tc.box.setFromObject(tc.mesh);
         });
 
         if (!inCar) {
+            // Player On-Foot Movement Physics
             if (isRunning) {
-                const speed = 0.5;
-                player.position.x -= Math.sin(cameraYaw) * speed;
-                player.position.z -= Math.cos(cameraYaw) * speed;
+                const speed = 0.42;
+                const nextPos = player.position.clone();
+                nextPos.x -= Math.sin(cameraYaw) * speed;
+                nextPos.z -= Math.cos(cameraYaw) * speed;
+
+                if (!checkCollision(nextPos, 0.9)) {
+                    player.position.copy(nextPos);
+                }
                 player.rotation.y = cameraYaw + Math.PI;
             }
-
-            const doorPos = new THREE.Vector3(-160, 1, -87);
-            if(player.position.distanceTo(doorPos) < 10) {
-                doorBtn.style.display = 'block';
-            } else {
-                doorBtn.style.display = 'none';
-            }
         } else {
+            // Car Driving Physics & Inertia Roll
             if (carInput.up) carSpeed = Math.min(maxSpeed, carSpeed + accel);
-            else if (carInput.down) carSpeed = Math.max(-maxSpeed * 0.5, carSpeed - accel);
+            else if (carInput.down) carSpeed = Math.max(-maxSpeed * 0.4, carSpeed - accel);
             else carSpeed *= friction;
 
             if (Math.abs(carSpeed) > 0.02) {
                 const dir = carSpeed > 0 ? 1 : -1;
-                if (carInput.left) car.rotation.y += 0.04 * dir;
-                if (carInput.right) car.rotation.y -= 0.04 * dir;
-            }
+                const turnSpeed = 0.038 * dir;
 
-            car.position.x -= Math.sin(car.rotation.y) * carSpeed;
-            car.position.z -= Math.cos(car.rotation.y) * carSpeed;
+                if (carInput.left) {
+                    car.rotation.y += turnSpeed;
+                    cameraYaw += turnSpeed; // CAMERA FOLLOWS CAR ROTATION
+                    carRoll = THREE.MathUtils.lerp(carRoll, 0.08, 0.1);
+                } else if (carInput.right) {
+                    car.rotation.y -= turnSpeed;
+                    cameraYaw -= turnSpeed; // CAMERA FOLLOWS CAR ROTATION
+                    carRoll = THREE.MathUtils.lerp(carRoll, -0.08, 0.1);
+                } else {
+                    carRoll = THREE.MathUtils.lerp(carRoll, 0, 0.1);
+                }
+            } else {
+                carRoll = THREE.MathUtils.lerp(carRoll, 0, 0.1);
+            }
+            car.rotation.z = carRoll;
+
+            const nextCarPos = car.position.clone();
+            nextCarPos.x -= Math.sin(car.rotation.y) * carSpeed;
+            nextCarPos.z -= Math.cos(car.rotation.y) * carSpeed;
+
+            if (!checkCollision(nextCarPos, 1.8)) {
+                car.position.copy(nextCarPos);
+            } else {
+                carSpeed = -carSpeed * 0.35; // Collision Bounce Shock
+            }
         }
 
-        // Smooth Camera Follow
+        // Camera Follow Physics
         const target = inCar ? car : player;
-        const dist = inCar ? 25 : 18;
-        camera.position.x = target.position.x + Math.sin(cameraYaw) * Math.cos(cameraPitch) * dist;
-        camera.position.y = target.position.y + Math.sin(cameraPitch) * dist + 4;
-        camera.position.z = target.position.z + Math.cos(cameraYaw) * Math.cos(cameraPitch) * dist;
-        camera.lookAt(target.position.x, target.position.y + 2, target.position.z);
+        const dist = inCar ? 20 : 13;
+        
+        const targetCamX = target.position.x + Math.sin(cameraYaw) * Math.cos(cameraPitch) * dist;
+        const targetCamY = target.position.y + Math.sin(cameraPitch) * dist + 2.2;
+        const targetCamZ = target.position.z + Math.cos(cameraYaw) * Math.cos(cameraPitch) * dist;
+
+        camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetCamX, 0.2);
+        camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetCamY, 0.2);
+        camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetCamZ, 0.2);
+
+        camera.lookAt(target.position.x, target.position.y + 1.2, target.position.z);
 
         renderer.render(scene, camera);
     }
