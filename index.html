@@ -1,272 +1,651 @@
-</html><!doctype html>
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Open City — Final Build</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Open City GTA Style — Full Mobile Edition</title>
 <style>
-html,body{margin:0;height:100%;overflow:hidden;background:#111;font-family:Arial,sans-serif}
-#game{display:block;width:100%;height:100%;touch-action:none}
-#hint{position:fixed;left:10px;top:10px;padding:8px 11px;border-radius:10px;background:#0009;color:#fff;font-size:13px;z-index:5}
-#wanted{position:fixed;right:18px;top:14px;padding:8px 12px;border-radius:10px;background:#000b;color:#fff;font-weight:700;z-index:7}
-#weapon{position:fixed;left:10px;bottom:150px;padding:7px 10px;border-radius:9px;background:#0009;color:#fff;font-size:13px;z-index:7}
-#health{position:fixed;left:10px;bottom:112px;padding:7px 10px;border-radius:9px;background:#0009;color:#fff;font-size:13px;z-index:7}
-#joy{position:fixed;left:22px;bottom:24px;width:112px;height:112px;border-radius:50%;background:#fff2;border:1px solid #fff5;z-index:5;touch-action:none}
-#stick{position:absolute;left:31px;top:31px;width:50px;height:50px;border-radius:50%;background:#fff8}
-#look{position:fixed;right:0;top:0;width:58%;height:72%;z-index:4;touch-action:none}
-/* Action Buttons */
-.btn{position:fixed;z-index:10;border-radius:50%;border:2px solid #fff;font-weight:bold;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,0.7);touch-action:none}
-#runBtn{left:25px;bottom:30px;width:75px;height:75px;background:#e84393;font-size:15px}
-#carBtn{right:25px;bottom:25px;width:70px;height:70px;background:#0984e3;font-size:12px}
-/* Vehicle Driving UI Controls */
-.car-steer-group{position:fixed;left:20px;bottom:30px;z-index:10;display:none;gap:15px}
-.car-accel-group{position:fixed;right:20px;bottom:30px;z-index:10;display:none;flex-direction:column;gap:15px}
-.c-btn{width:65px;height:65px;border-radius:15px;border:2px solid #fff;background:rgba(20,20,20,0.85);color:#fff;font-size:24px;font-weight:bold;touch-action:none}
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  #gameCanvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
+
+  /* Top Overlay HUD */
+  .hud-panel { position: fixed; z-index: 10; pointer-events: none; display: flex; flex-direction: column; gap: 6px; }
+  .hud-top-left { top: 12px; left: 12px; }
+  .hud-top-right { top: 12px; right: 12px; align-items: flex-end; }
+  
+  .hud-box { background: rgba(15, 15, 20, 0.75); border: 1px solid rgba(255, 255, 255, 0.15); padding: 6px 14px; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.8); backdrop-filter: blur(4px); }
+  .hud-health { color: #ff4757; }
+  .hud-armor { color: #1e90ff; }
+  .hud-money { color: #2ed573; font-size: 15px; }
+  .hud-wanted { color: #ffa502; letter-spacing: 2px; }
+  .hud-ammo { color: #eccc68; }
+
+  /* Notification Toast */
+  #notification { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #333; pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 20; text-align: center; }
+
+  /* Touch Touch Camera Layer */
+  #cameraTouchZone { position: fixed; top: 0; right: 0; width: 65vw; height: 100vh; z-index: 2; touch-action: none; }
+
+  /* On-Screen Joystick Container */
+  #joystickContainer { position: fixed; left: 25px; bottom: 25px; width: 110px; height: 110px; border-radius: 50%; background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255, 255, 255, 0.3); z-index: 10; touch-action: none; display: flex; justify-content: center; align-items: center; }
+  #joystickKnob { width: 48px; height: 48px; border-radius: 50%; background: rgba(255, 255, 255, 0.75); box-shadow: 0 0 10px rgba(0,0,0,0.5); pointer-events: none; }
+
+  /* Action Buttons Grid */
+  .action-btn { position: fixed; z-index: 10; border: none; border-radius: 50%; color: #fff; font-weight: bold; display: flex; justify-content: center; align-items: center; touch-action: none; box-shadow: 0 4px 12px rgba(0,0,0,0.6); active: transform scale(0.92); }
+  .action-btn:active { transform: scale(0.9); }
+
+  #btnFire { right: 95px; bottom: 25px; width: 62px; height: 62px; background: radial-gradient(circle, #ff4757, #ff6b81); font-size: 13px; }
+  #btnEnter { right: 20px; bottom: 25px; width: 62px; height: 62px; background: radial-gradient(circle, #2ed573, #7bed9f); font-size: 11px; text-align: center; line-height: 1.1; }
+  #btnInteract { right: 25px; bottom: 100px; width: 52px; height: 52px; background: radial-gradient(circle, #70a1ff, #1e90ff); font-size: 16px; }
+  #btnWeapon { right: 95px; bottom: 100px; width: 52px; height: 52px; background: radial-gradient(circle, #ffa502, #ff7f50); font-size: 12px; }
+
+  /* Driving UI Controls (Car / Bike / Boat) */
+  .drive-panel { position: fixed; bottom: 25px; display: none; z-index: 10; }
+  #driveSteerPanel { left: 20px; gap: 12px; }
+  #driveAccelPanel { right: 20px; flex-direction: column; gap: 12px; }
+  
+  .drive-btn { width: 60px; height: 60px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.6); background: rgba(20, 20, 30, 0.8); color: #fff; font-size: 22px; font-weight: bold; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.7); }
+  .drive-btn:active { background: rgba(255,255,255,0.3); }
+
+  /* Screen Center Crosshair */
+  #crosshair { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; border: 2px solid rgba(255,255,255,0.7); border-radius: 50%; pointer-events: none; z-index: 5; }
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
-<div id="hint">GTA VICE CITY - ALL ONLINE ASSETS READY</div>
-<div id="wanted">WANTED: ☆☆☆☆☆</div>
-<div id="weapon">🔫 Pistol • Ammo: 12</div>
-<div id="health">❤️ Health: 100 • Armor: 0</div>
-<!-- Buttons -->
-<button class="btn" id="runBtn">🏃 RUN</button>
-<button class="btn" id="carBtn">🚗 ENTER</button>
-<!-- Driving Controls -->
-<div class="car-steer-group" id="steerGroup">
-  <button class="c-btn" id="cLeft">⬅️</button>
-  <button class="c-btn" id="cRight">➡️</button>
-</div>
-<div class="car-accel-group" id="accelGroup">
-  <button class="c-btn" id="cUp">⬆️</button>
-  <button class="c-btn" id="cDown">⬇️</button>
-</div>
-<div id="joy"><div id="stick"></div></div>
-<div id="look"></div>
 
+<canvas id="gameCanvas"></canvas>
+<div id="crosshair"></div>
+<div id="notification">Welcome to Open City!</div>
+
+<!-- Top Status HUD -->
+<div class="hud-panel hud-top-left">
+  <div class="hud-box hud-health" id="uiHealth">❤️ HEALTH: 100</div>
+  <div class="hud-box hud-armor" id="uiArmor">🛡️ ARMOR: 50</div>
+  <div class="hud-box hud-ammo" id="uiAmmo">🔫 AMMO: 30 / 120</div>
+</div>
+
+<div class="hud-panel hud-top-right">
+  <div class="hud-box hud-money" id="uiMoney">💵 $2,500</div>
+  <div class="hud-box hud-wanted" id="uiWanted">🚨 ☆☆☆☆☆</div>
+</div>
+
+<!-- Touch Input Zones -->
+<div id="cameraTouchZone"></div>
+<div id="joystickContainer"><div id="joystickKnob"></div></div>
+
+<!-- Mobile Buttons -->
+<button class="action-btn" id="btnFire">🔥<br>FIRE</button>
+<button class="action-btn" id="btnEnter">🚗<br>ENTER</button>
+<button class="action-btn" id="btnInteract">E</button>
+<button class="action-btn" id="btnWeapon">🔄<br>GUN</button>
+
+<!-- Vehicle Dynamic Controls -->
+<div id="driveSteerPanel" class="drive-panel">
+  <button class="drive-btn" id="btnSteerLeft">◀</button>
+  <button class="drive-btn" id="btnSteerRight">▶</button>
+</div>
+<div id="driveAccelPanel" class="drive-panel">
+  <button class="drive-btn" id="btnGas">▲</button>
+  <button class="drive-btn" id="btnBrake">▼</button>
+</div>
+
+<!-- Import Three.js Engine -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
 <script>
-window.addEventListener('DOMContentLoaded', () => {
-    const canvas=document.getElementById('game');
-    const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-    renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-    renderer.setSize(innerWidth,innerHeight);
-    renderer.shadowMap.enabled=true;
+// --- PART 2: WORLD GENERATION & OBJECTS SETUP ---
 
-    const scene=new THREE.Scene();
-    scene.background=new THREE.Color(0x8bb7d9);
-    scene.fog=new THREE.FogExp2(0x8bb7d9,0.0015);
+window.addEventListener('load', () => {
+    const canvas = document.getElementById('gameCanvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,1000);
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x73a8d4);
+    scene.fog = new THREE.FogExp2(0x73a8d4, 0.008);
 
-    scene.add(new THREE.HemisphereLight(0xbfe2ff,0x39412f,1.8));
-    const sun=new THREE.DirectionalLight(0xffffff,2.2);
-    sun.position.set(80,130,50); sun.castShadow=true; scene.add(sun);
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-    const colliders=[];
+    // Lights Setup
+    const ambientLight = new THREE.HemisphereLight(0xffffff, 0x444455, 1.2);
+    scene.add(ambientLight);
 
-    // --- CITY ENVIRONMENT & ROAD NETWORK ---
-    const ocean=new THREE.Mesh(new THREE.PlaneGeometry(1200,1200),new THREE.MeshLambertMaterial({color:0x00cec9}));
-    ocean.rotation.x=-Math.PI/2; ocean.position.y=-0.5;
-    scene.add(ocean);
+    const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+    sun.position.set(100, 150, 50);
+    sun.castShadow = true;
+    sun.shadow.mapSize.width = 1024;
+    sun.shadow.mapSize.height = 1024;
+    sun.shadow.camera.near = 10;
+    sun.shadow.camera.far = 300;
+    const shadowSize = 100;
+    sun.shadow.camera.left = -shadowSize;
+    sun.shadow.camera.right = shadowSize;
+    sun.shadow.camera.top = shadowSize;
+    sun.shadow.camera.bottom = -shadowSize;
+    scene.add(sun);
 
-    const ground=new THREE.Mesh(
-     new THREE.BoxGeometry(600,2,800),
-     new THREE.MeshStandardMaterial({color:0x55efc4,roughness:1})
-    );
-    ground.position.set(0,0,0); scene.add(ground);
+    // Array Collections for Collision & AI
+    const colliders = [];
+    const vehicles = [];
+    const npcs = [];
+    const pickups = [];
 
-    const roadMat=new THREE.MeshStandardMaterial({color:0x2d3436});
-    const mainRoad=new THREE.Mesh(new THREE.PlaneGeometry(35,780),roadMat);
-    mainRoad.rotation.x=-Math.PI/2; mainRoad.position.set(-180,1.1,0);
-    scene.add(mainRoad);
+    // --- WORLD ENVIRONMENT CREATION ---
+    // Ground
+    const groundGeo = new THREE.PlaneGeometry(600, 600);
+    const groundMat = new THREE.MeshLambertMaterial({ color: 0x557a46 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
 
-    // Palm Tree Generator (Vice City Ocean Drive Style)
-    function createPalmTree(x,z){
-        const treeGroup=new THREE.Group();
-        const trunkGeo=new THREE.CylinderGeometry(0.3,0.5,8,8);
-        const trunkMat=new THREE.MeshLambertMaterial({color:0x8e583c});
-        const trunk=new THREE.Mesh(trunkGeo,trunkMat); trunk.position.y=4; treeGroup.add(trunk);
-        const leafMat=new THREE.MeshLambertMaterial({color:0x10ac84});
-        for(let i=0;i<5;i++){
-            const leaf=new THREE.Mesh(new THREE.BoxGeometry(4,0.1,1.2),leafMat);
-            leaf.position.set(0,8,0); leaf.rotation.y=(Math.PI/2.5)*i; leaf.rotation.z=0.3; treeGroup.add(leaf);
-        }
-        treeGroup.position.set(x,1,z); scene.add(treeGroup); colliders.push(new THREE.Box3().setFromObject(trunk));
-    }
-    for(let z=-350;z<=350;z+=50){ createPalmTree(-125,z); }
+    // Road Grid System
+    const roadMat = new THREE.MeshLambertMaterial({ color: 0x22252a });
+    const roadLineMat = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
 
-    // GTA VICE CITY SAFEHOUSE (Ocean View Hotel Style)
-    const houseGroup=new THREE.Group(); houseGroup.position.set(-130,1,-100);
-    const hotelBase=new THREE.Mesh(new THREE.BoxGeometry(35,25,25),new THREE.MeshLambertMaterial({color:0xfab1a0}));
-    hotelBase.position.y=12.5; houseGroup.add(hotelBase);
-    const hotelSign=new THREE.Mesh(new THREE.BoxGeometry(25,4,3),new THREE.MeshLambertMaterial({color:0xe84393}));
-    hotelSign.position.set(0,26,11); houseGroup.add(hotelSign);
-    for(let i=0;i<4;i++){
-        const step=new THREE.Mesh(new THREE.BoxGeometry(12,0.5,1.8),new THREE.MeshLambertMaterial({color:0xdfe6e9}));
-        step.position.set(0,i*0.5+0.25,12.5+(i*1.5)); houseGroup.add(step);
-    }
-    scene.add(houseGroup); colliders.push(new THREE.Box3().setFromObject(hotelBase));
+    for (let r = -200; r <= 200; r += 80) {
+        // Horizontal Roads
+        const hRoad = new THREE.Mesh(new THREE.PlaneGeometry(600, 16), roadMat);
+        hRoad.rotation.x = -Math.PI / 2;
+        hRoad.position.set(0, 0.02, r);
+        hRoad.receiveShadow = true;
+        scene.add(hRoad);
 
-    // BUILDINGS (Ocean Drive Setup)
-    function addBuilding(x,z,w,h,d,color){
-        const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:color}));
-        mesh.position.set(x,h/2+1,z); scene.add(mesh); colliders.push(new THREE.Box3().setFromObject(mesh));
-    }
-    const vcColors=[0xfd79a8,0x81ecec,0xffebe9,0xfffe6a,0xa29bfe];
-    for(let z=-320;z<=320;z+=70){
-        if(Math.abs(z-(-100))<40) continue;
-        addBuilding(-240,z,40,30+Math.random()*25,45,vcColors[Math.floor(Math.random()*vcColors.length)]);
-        addBuilding(100,z,50,35+Math.random()*25,45,vcColors[Math.floor(Math.random()*vcColors.length)]);
+        // Vertical Roads
+        const vRoad = new THREE.Mesh(new THREE.PlaneGeometry(16, 600), roadMat);
+        vRoad.rotation.x = -Math.PI / 2;
+        vRoad.position.set(r, 0.02, 0);
+        vRoad.receiveShadow = true;
+        scene.add(vRoad);
     }
 
-    // --- PLAYER CHARACTER (Tommy Style) ---
-    const player=new THREE.Group();
-    const pBody=new THREE.Mesh(new THREE.BoxGeometry(1.2,2.0,0.8),new THREE.MeshLambertMaterial({color:0x00cec9}));
-    pBody.position.y=1.0; player.add(pBody);
-    const pHead=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),new THREE.MeshLambertMaterial({color:0xffeaa7}));
-    pHead.position.y=2.2; player.add(pHead);
-    player.position.set(-130,1.0,-82); scene.add(player);
+    // City Buildings Generator
+    const buildingMat = new THREE.MeshLambertMaterial({ color: 0x7f8c8d });
+    const windowMat = new THREE.MeshBasicMaterial({ color: 0xf1c40f });
 
-    // --- CAR SETUP ---
-    const car=new THREE.Group();
-    const cBase=new THREE.Mesh(new THREE.BoxGeometry(2.8,1.1,5.0),new THREE.MeshLambertMaterial({color:0xd63031}));
-    cBase.position.y=0.55; car.add(cBase);
-    const cCabin=new THREE.Mesh(new THREE.BoxGeometry(2.2,0.7,2.5),new THREE.MeshLambertMaterial({color:0x2d3436}));
-    cCabin.position.set(0,1.3,-0.2); car.add(cCabin);
-    car.position.set(-165,1.0,-82); scene.add(car);
+    for (let x = -220; x <= 220; x += 80) {
+        for (let z = -220; z <= 220; z += 80) {
+            if (Math.abs(x) < 30 && Math.abs(z) < 30) continue; // Keep Spawn Clear
 
-    // --- BIKE CREATION ---
-    const bike=new THREE.Group();
-    const bBody=new THREE.Mesh(new THREE.BoxGeometry(1.0,0.8,2.4),new THREE.MeshLambertMaterial({color:0x222222}));
-    bBody.position.y=0.5; bike.add(bBody);
-    for(const dz of [-0.9,0.9]){
-        const w=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.34,0.18,12),new THREE.MeshStandardMaterial({color:0x111111}));
-        w.rotation.z=Math.PI/2; w.position.set(0,0.45,dz); bike.add(w);
-    }
-    bike.position.set(-150,0, -70); scene.add(bike);
+            const bWidth = 32 + Math.random() * 10;
+            const bDepth = 32 + Math.random() * 10;
+            const bHeight = 25 + Math.random() * 45;
 
-    // --- BUS CREATION ---
-    const bus=new THREE.Group();
-    const busBody=new THREE.Mesh(new THREE.BoxGeometry(3.5,3.0,12.0),new THREE.MeshLambertMaterial({color:0x0984e3}));
-    busBody.position.y=1.5; bus.add(busBody);
-    bus.position.set(-200,0, -100); scene.add(bus);
+            const bGeo = new THREE.BoxGeometry(bWidth, bHeight, bDepth);
+            const building = new THREE.Mesh(bGeo, buildingMat);
+            building.position.set(x + 25, bHeight / 2, z + 25);
+            building.castShadow = true;
+            building.receiveShadow = true;
+            scene.add(building);
+            colliders.push(building);
 
-    let vehicleSpeed=0; const maxSpeed=1.1, accel=0.02, friction=0.95;
-
-    // --- TRAFFIC CARS ---
-    const trafficCars=[];
-    function createTrafficCar(x,z,dir){
-        const tCar=new THREE.Group();
-        const body=new THREE.Mesh(new THREE.BoxGeometry(2.8,1.1,5.0),new THREE.MeshLambertMaterial({color:0xfdcb6e}));
-        body.position.y=0.55; tCar.add(body);
-        tCar.position.set(x,1.0,z); scene.add(tCar);
-        return {mesh:tCar,speed:0.35,dir:dir,box:new THREE.Box3()};
-    }
-    for(let i=0;i<6;i++){ trafficCars.push(createTrafficCar(-180+(i%2==0?6:-6),-300+i*100,i%2==0?1:-1)); }
-
-    // --- PEDESTRIAN A.I (عام لوگ) ---
-    const peds=[];
-    function spawnPedestrian(x,z){
-        const ped=new THREE.Mesh(new THREE.BoxGeometry(1.0,1.9,0.6),new THREE.MeshLambertMaterial({color:0x6c5ce7}));
-        ped.position.set(x,1.5,z); scene.add(ped);
-        peds.push({mesh:ped,dir:Math.random()*Math.PI*2,speed:0.08});
-    }
-    for(let i=0;i<15;i++) spawnPedestrian(-100+Math.random()*80,-200+Math.random()*400);
-
-    // CONTROLS & CAMERA
-    let inCar=false, isRunning=false, currentVehicle=null, vehicleType='';
-    let cameraYaw=0, cameraPitch=0.25;
-    const vInput={up:false,down:false,left:false,right:false};
-
-    // Multi-touch Camera Setup
-    let cameraTouchId=null, lastX=0, lastY=0;
-    const runBtn=document.getElementById('runBtn');
-    runBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); isRunning=true; }, {passive:false});
-    runBtn.addEventListener('touchend', (e)=>{ e.preventDefault(); isRunning=false; }, {passive:false});
-
-    window.addEventListener('touchstart', (e)=>{
-        for(let i=0;i<e.changedTouches.length;i++){
-            const touch=e.changedTouches[i];
-            if(touch.target!==runBtn && !touch.target.classList.contains('c-btn') && touch.target!==carBtn){
-                cameraTouchId=touch.identifier; lastX=touch.clientX; lastY=touch.clientY; break;
+            // Add Decorative Windows
+            for (let w = 2; w < bHeight - 4; w += 6) {
+                const win = new THREE.Mesh(new THREE.PlaneGeometry(bWidth - 4, 1.5), windowMat);
+                win.position.set(x + 25, w, z + 25 + bDepth / 2 + 0.1);
+                scene.add(win);
             }
         }
-    });
-    window.addEventListener('touchmove', (e)=>{
-        for(let i=0;i<e.changedTouches.length;i++){
-            const touch=e.changedTouches[i];
-            if(touch.identifier===cameraTouchId){
-                const dx=touch.clientX-lastX; const dy=touch.clientY-lastY;
-                cameraYaw-=dx*0.008; cameraPitch=Math.max(-0.2,Math.min(0.9,cameraPitch+dy*0.008));
-                lastX=touch.clientX; lastY=touch.clientY;
-            }
-        }
-    });
-    window.addEventListener('touchend', (e)=>{
-        for(let i=0;i<e.changedTouches.length;i++){ if(e.changedTouches[i].identifier===cameraTouchId) cameraTouchId=null; }
-    });
+    }
 
-    // Vehicle Driving Controls
-    const setupBtn=(id,key)=>{
-        const btn=document.getElementById(id);
-        btn.addEventListener('touchstart', (e)=>{ e.preventDefault(); vInput[key]=true; }, {passive:false});
-        btn.addEventListener('touchend', (e)=>{ e.preventDefault(); vInput[key]=false; }, {passive:false});
+    // Water Zone & Ocean Bridge
+    const waterGeo = new THREE.PlaneGeometry(300, 180);
+    const waterMat = new THREE.MeshLambertMaterial({ color: 0x2980b9, transparent: true, opacity: 0.85 });
+    const water = new THREE.Mesh(waterGeo, waterMat);
+    water.rotation.x = -Math.PI / 2;
+    water.position.set(0, -0.2, 230);
+    scene.add(water);
+
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(20, 2, 180), new THREE.MeshLambertMaterial({ color: 0x555555 }));
+    bridge.position.set(0, 0.8, 230);
+    bridge.castShadow = true;
+    bridge.receiveShadow = true;
+    scene.add(bridge);
+
+    // --- HOUSE & INTERIOR SYSTEM ---
+    const houseGroup = new THREE.Group();
+    const houseWallMat = new THREE.MeshLambertMaterial({ color: 0xdfe6e9 });
+
+    // Exterior Box
+    const hOuter = new THREE.Mesh(new THREE.BoxGeometry(18, 8, 14), houseWallMat);
+    hOuter.position.set(0, 4, 0);
+    houseGroup.add(hOuter);
+
+    // Interior Room Base & Roof
+    const hFloor = new THREE.Mesh(new THREE.BoxGeometry(17, 0.2, 13), new THREE.MeshLambertMaterial({ color: 0xe67e22 }));
+    hFloor.position.set(0, 0.1, 0);
+    houseGroup.add(hFloor);
+
+    houseGroup.position.set(100, 0, -100);
+    scene.add(houseGroup);
+
+    // --- VEHICLE FACTORY BUILDER ---
+    function buildCar(x, z, color, type = 'car') {
+        const vGroup = new THREE.Group();
+        let bodyGeo, topGeo;
+
+        if (type === 'bike') {
+            bodyGeo = new THREE.BoxGeometry(0.8, 0.9, 2.2);
+            topGeo = new THREE.BoxGeometry(0.6, 0.5, 0.8);
+        } else if (type === 'boat') {
+            bodyGeo = new THREE.BoxGeometry(3.2, 1.0, 7.0);
+            topGeo = new THREE.BoxGeometry(2.2, 0.8, 2.5);
+        } else {
+            bodyGeo = new THREE.BoxGeometry(2.4, 1.1, 4.8);
+            topGeo = new THREE.BoxGeometry(2.0, 0.9, 2.4);
+        }
+
+        const body = new THREE.Mesh(bodyGeo, new THREE.MeshLambertMaterial({ color }));
+        body.position.y = type === 'boat' ? 0.3 : 0.6;
+        body.castShadow = true;
+        vGroup.add(body);
+
+        const top = new THREE.Mesh(topGeo, new THREE.MeshLambertMaterial({ color: 0x111111 }));
+        top.position.set(0, body.position.y + 0.8, -0.2);
+        vGroup.add(top);
+
+        vGroup.position.set(x, 0, z);
+        vGroup.userData = { type, speed: 0, health: 100 };
+        scene.add(vGroup);
+        vehicles.push(vGroup);
+        return vGroup;
+    }
+
+    // Spawn Vehicles
+    const car1 = buildCar(10, 20, 0xe74c3c, 'car');
+    const bike1 = buildCar(-15, 20, 0x2ecc71, 'bike');
+    const boat1 = buildCar(0, 230, 0xf39c12, 'boat');
+
+    // Helicopter Base & Model
+    const heliGroup = new THREE.Group();
+    const hBody = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.0, 6.0), new THREE.MeshLambertMaterial({ color: 0x2c3e50 }));
+    hBody.position.y = 1.0;
+    heliGroup.add(hBody);
+
+    const hRotor = new THREE.Mesh(new THREE.BoxGeometry(8.0, 0.1, 0.4), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+    hRotor.position.set(0, 2.2, 0);
+    heliGroup.add(hRotor);
+    heliGroup.userData = { rotor: hRotor };
+
+    heliGroup.position.set(0, 30, 0);
+    scene.add(heliGroup);
+
+    // Export variables to window for Part 3 access
+    window.gameEngine = {
+        scene, camera, renderer, sun,
+        colliders, vehicles, npcs, pickups,
+        houseGroup, heliGroup, water
     };
-    setupBtn('cUp','up'); setupBtn('cDown','down'); setupBtn('cLeft','left'); setupBtn('cRight','right');
+// --- PART 3: PLAYER, TOUCH CONTROLS, CAMERA & PHYSICS LOGIC ---
 
-    const carBtn=document.getElementById('carBtn'), steerGroup=document.getElementById('steerGroup'), accelGroup=document.getElementById('accelGroup');
-    carBtn.addEventListener('click', ()=>{
-        if(!inCar){
-            const vehicles=[{mesh:car,type:'car'},{mesh:bike,type:'bike'},{mesh:bus,type:'bus'}];
-            for(let v of vehicles){
-                if(player.position.distanceTo(v.mesh.position)<8){
-                    inCar=true; currentVehicle=v.mesh; vehicleType=v.type; player.visible=false;
-                    carBtn.textContent='🚶 EXIT'; runBtn.style.display='none'; steerGroup.style.display='flex'; accelGroup.style.display='flex';
-                    cameraYaw=v.mesh.rotation.y; break;
+    const { scene, camera, renderer, colliders, vehicles, npcs, pickups, houseGroup, heliGroup, water } = window.gameEngine;
+
+    // --- PLAYER CREATION ---
+    const playerGroup = new THREE.Group();
+
+    // Body
+    const pBodyMat = new THREE.MeshLambertMaterial({ color: 0x2980b9 });
+    const pBody = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.8, 0.6), pBodyMat);
+    pBody.position.y = 0.9;
+    pBody.castShadow = true;
+    playerGroup.add(pBody);
+
+    // Head
+    const pHeadMat = new THREE.MeshLambertMaterial({ color: 0xffdbac });
+    const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), pHeadMat);
+    pHead.position.y = 2.0;
+    pHead.castShadow = true;
+    playerGroup.add(pHead);
+
+    // Gun Model Attachment
+    const gunMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+    const pGun = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.8), gunMat);
+    pGun.position.set(0.6, 1.3, -0.4);
+    playerGroup.add(pGun);
+
+    playerGroup.position.set(0, 0, 8);
+    scene.add(playerGroup);
+
+    // Player State Management
+    const playerState = {
+        health: 100,
+        armor: 50,
+        ammo: 120,
+        money: 2500,
+        wanted: 1,
+        inVehicle: null,
+        insideHouse: false,
+        activeWeapon: 'PISTOL'
+    };
+
+    // --- ON-SCREEN TOUCH JOYSTICK LOGIC ---
+    const joyContainer = document.getElementById('joystickContainer');
+    const joyKnob = document.getElementById('joystickKnob');
+    let joyTouchId = null;
+    let moveInput = { x: 0, y: 0 };
+
+    joyContainer.addEventListener('touchstart', (e) => {
+        const touch = e.changedTouches[0];
+        joyTouchId = touch.identifier;
+        handleJoystickMove(touch);
+    }, { passive: false });
+
+    window.addEventListener('touchmove', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === joyTouchId) {
+                handleJoystickMove(e.changedTouches[i]);
+            }
+        }
+    }, { passive: false });
+
+    const resetJoystick = () => {
+        joyKnob.style.transform = `translate(0px, 0px)`;
+        moveInput.x = 0;
+        moveInput.y = 0;
+    };
+
+    window.addEventListener('touchend', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === joyTouchId) {
+                joyTouchId = null;
+                resetJoystick();
+            }
+        }
+    });
+
+    function handleJoystickMove(touch) {
+        const rect = joyContainer.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        let dx = touch.clientX - centerX;
+        let dy = touch.clientY - centerY;
+        const maxRadius = 35;
+        const distance = Math.hypot(dx, dy);
+
+        if (distance > maxRadius) {
+            dx = (dx / distance) * maxRadius;
+            dy = (dy / distance) * maxRadius;
+        }
+
+        joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+        moveInput.x = dx / maxRadius;
+        moveInput.y = dy / maxRadius;
+    }
+
+    // --- CAMERA TOUCH LOOK CONTROLS ---
+    const cameraZone = document.getElementById('cameraTouchZone');
+    let camTouchId = null;
+    let lastCamX = 0, lastCamY = 0;
+    let cameraYaw = 0, cameraPitch = 0.25;
+
+    cameraZone.addEventListener('touchstart', (e) => {
+        const touch = e.changedTouches[0];
+        camTouchId = touch.identifier;
+        lastCamX = touch.clientX;
+        lastCamY = touch.clientY;
+    });
+
+    window.addEventListener('touchmove', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === camTouchId) {
+                const touch = e.changedTouches[i];
+                const deltaX = touch.clientX - lastCamX;
+                const deltaY = touch.clientY - lastCamY;
+
+                cameraYaw -= deltaX * 0.005;
+                cameraPitch = Math.max(-0.1, Math.min(0.6, cameraPitch + deltaY * 0.005));
+
+                lastCamX = touch.clientX;
+                lastCamY = touch.clientY;
+            }
+        }
+    });
+
+    window.addEventListener('touchend', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === camTouchId) {
+                camTouchId = null;
+            }
+        }
+    });
+
+    // --- VEHICLE DRIVING CONTROLS INPUT ---
+    const driveInput = { gas: false, brake: false, left: false, right: false };
+
+    function bindDriveBtn(elementId, inputKey) {
+        const btn = document.getElementById(elementId);
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); driveInput[inputKey] = true; });
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); driveInput[inputKey] = false; });
+    }
+
+    bindDriveBtn('btnGas', 'gas');
+    bindDriveBtn('btnBrake', 'brake');
+    bindDriveBtn('btnSteerLeft', 'left');
+    bindDriveBtn('btnSteerRight', 'right');
+
+    // Export Part 3 Objects to Global Scope
+    window.gameEngine.playerGroup = playerGroup;
+    window.gameEngine.playerState = playerState;
+    window.gameEngine.moveInput = moveInput;
+    window.gameEngine.driveInput = driveInput;
+    window.gameEngine.getCameraAngles = () => ({ yaw: cameraYaw, pitch: cameraPitch });
+
+// --- PART 4: GAMEPLAY LOOPS, ACTIONS & EVENT LISTENERS ---
+
+    const { 
+        playerGroup, playerState, moveInput, driveInput, getCameraAngles 
+    } = window.gameEngine;
+
+    // --- BUTTON EVENT LISTENERS ---
+    
+    // 1. Enter / Exit Vehicle Action
+    const btnEnter = document.getElementById('btnEnter');
+    const driveSteerPanel = document.getElementById('driveSteerPanel');
+    const driveAccelPanel = document.getElementById('driveAccelPanel');
+    const joyContainerEl = document.getElementById('joystickContainer');
+
+    btnEnter.addEventListener('click', () => {
+        if (!playerState.inVehicle) {
+            // Check Near Any Vehicle
+            for (let v of vehicles) {
+                if (playerGroup.position.distanceTo(v.position) < 5) {
+                    playerState.inVehicle = v;
+                    playerGroup.visible = false;
+                    
+                    btnEnter.innerHTML = '🚶<br>EXIT';
+                    joyContainerEl.style.display = 'none';
+                    driveSteerPanel.style.display = 'flex';
+                    driveAccelPanel.style.display = 'flex';
+                    showNotification("Vehicle Entered!");
+                    break;
                 }
             }
         } else {
-            inCar=false; player.position.copy(currentVehicle.position); player.position.x+=4; player.visible=true;
-            carBtn.textContent='🚗 ENTER'; runBtn.style.display='flex'; steerGroup.style.display='none'; accelGroup.style.display='none';
-            currentVehicle=null; vehicleType='';
+            // Exit Vehicle
+            const v = playerState.inVehicle;
+            playerGroup.position.copy(v.position);
+            playerGroup.position.x += 2.5;
+            playerGroup.visible = true;
+            
+            playerState.inVehicle = null;
+            btnEnter.innerHTML = '🚗<br>ENTER';
+            joyContainerEl.style.display = 'flex';
+            driveSteerPanel.style.display = 'none';
+            driveAccelPanel.style.display = 'none';
+            showNotification("Exited Vehicle");
         }
     });
 
-    // Collision Check
-    function checkCollision(nextPos, radius){
-        const pBox=new THREE.Box3(new THREE.Vector3(nextPos.x-radius,0,nextPos.z-radius),new THREE.Vector3(nextPos.x+radius,4,nextPos.z+radius));
-        for(let box of colliders){ if(pBox.intersectsBox(box)) return true; }
-        return false;
-    }
-
-    // MAIN GAME LOOP
-    function animate(){
-        requestAnimationFrame(animate);
-        trafficCars.forEach(tc=>{ tc.mesh.position.z+=tc.speed*tc.dir; if(tc.mesh.position.z>350) tc.mesh.position.z=-350; if(tc.mesh.position.z<-350) tc.mesh.position.z=350; tc.box.setFromObject(tc.mesh); });
-        peds.forEach(p=>{ p.mesh.position.x-=Math.sin(p.dir)*p.speed; p.mesh.position.z-=Math.cos(p.dir)*p.speed; if(Math.random()<0.01) p.dir+=(Math.random()-0.5); });
-
-        if(!inCar){
-            if(isRunning){
-                const speed=0.4; const nextPos=player.position.clone(); nextPos.x-=Math.sin(cameraYaw)*speed; nextPos.z-=Math.cos(cameraYaw)*speed;
-                if(!checkCollision(nextPos,1.0)) player.position.copy(nextPos);
-                player.rotation.y=cameraYaw+Math.PI;
-            }
-        } else {
-            const maxS=vehicleType==='bike'?1.6:(vehicleType==='bus'?0.9:1.1); const ac=vehicleType==='bike'?0.04:0.02;
-            if(vInput.up) vehicleSpeed=Math.min(maxS,vehicleSpeed+ac); else if(vInput.down) vehicleSpeed=Math.max(-maxS*0.4,vehicleSpeed-ac); else vehicleSpeed*=friction;
-            if(Math.abs(vehicleSpeed)>0.02){ const dir=vehicleSpeed>0?1:-1; const turnSpeed=(vehicleType==='bike'?0.05:0.035)*dir; if(vInput.left){ currentVehicle.rotation.y+=turnSpeed; cameraYaw+=turnSpeed; } if(vInput.right){ currentVehicle.rotation.y-=turnSpeed; cameraYaw-=turnSpeed; } }
-            const nextVehiclePos=currentVehicle.position.clone(); nextVehiclePos.x-=Math.sin(currentVehicle.rotation.y)*vehicleSpeed; nextVehiclePos.z-=Math.cos(currentVehicle.rotation.y)*vehicleSpeed;
-            if(!checkCollision(nextVehiclePos,1.8)) currentVehicle.position.copy(nextVehiclePos); else vehicleSpeed=-vehicleSpeed*0.3;
+    // 2. Fire Gun Action
+    const btnFire = document.getElementById('btnFire');
+    btnFire.addEventListener('click', () => {
+        if (playerState.ammo <= 0) {
+            showNotification("Out of Ammo!");
+            return;
         }
 
-        const target=inCar?currentVehicle:player; const dist=inCar?(vehicleType==='bus'?28:20):14;
-        camera.position.x=target.position.x+Math.sin(cameraYaw)*Math.cos(cameraPitch)*dist; camera.position.y=target.position.y+Math.sin(cameraPitch)*dist+2.5; camera.position.z=target.position.z+Math.cos(cameraYaw)*Math.cos(cameraPitch)*dist; camera.lookAt(target.position.x,target.position.y+1.2,target.position.z);
-        renderer.render(scene,camera);
+        playerState.ammo--;
+        updateHUD();
+
+        // Create Bullet Projectile
+        const bulletGeo = new THREE.SphereGeometry(0.15, 8, 8);
+        const bulletMat = new THREE.MeshBasicMaterial({ color: 0xfff100 });
+        const bullet = new THREE.Mesh(bulletGeo, bulletMat);
+
+        const spawnPos = playerGroup.position.clone();
+        spawnPos.y += 1.4;
+        bullet.position.copy(spawnPos);
+
+        const { yaw } = getCameraAngles();
+        bullet.userData = {
+            dir: new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw)).normalize(),
+            life: 60
+        };
+
+        scene.add(bullet);
+        bullets.push(bullet);
+    });
+
+    const bullets = [];
+
+    // 3. House & Interior Interaction (E Button)
+    const btnInteract = document.getElementById('btnInteract');
+    btnInteract.addEventListener('click', () => {
+        const housePos = new THREE.Vector3(100, 0, -100);
+        if (playerGroup.position.distanceTo(housePos) < 12) {
+            playerState.insideHouse = !playerState.insideHouse;
+            houseGroup.visible = !playerState.insideHouse;
+
+            if (playerState.insideHouse) {
+                playerGroup.position.set(100, 1, -100);
+                showNotification("Entered House Safezone");
+            } else {
+                playerGroup.position.set(100, 0, -88);
+                showNotification("Exited House");
+            }
+        } else {
+            showNotification("No interactable object nearby!");
+        }
+    });
+
+    // 4. Weapon Switcher Button
+    const btnWeapon = document.getElementById('btnWeapon');
+    btnWeapon.addEventListener('click', () => {
+        if (playerState.activeWeapon === 'PISTOL') {
+            playerState.activeWeapon = 'RIFLE';
+            btnWeapon.innerHTML = '🔫<br>RIFLE';
+            showNotification("Switched to Rifle");
+        } else {
+            playerState.activeWeapon = 'PISTOL';
+            btnWeapon.innerHTML = '🔄<br>GUN';
+            showNotification("Switched to Pistol");
+        }
+    });
+
+    // --- UI NOTIFICATION HELPER ---
+    function showNotification(msg) {
+        const el = document.getElementById('notification');
+        el.textContent = msg;
+        el.style.opacity = '1';
+        setTimeout(() => { el.style.opacity = '0'; }, 2000);
     }
+
+    function updateHUD() {
+        document.getElementById('uiHealth').textContent = `❤️ HEALTH: ${playerState.health}`;
+        document.getElementById('uiArmor').textContent = `🛡️ ARMOR: ${playerState.armor}`;
+        document.getElementById('uiAmmo').textContent = `🔫 AMMO: ${playerState.ammo}`;
+        document.getElementById('uiMoney').textContent = `💵 $${playerState.money}`;
+        document.getElementById('uiWanted').textContent = `🚨 ${'★'.repeat(playerState.wanted)}${'☆'.repeat(5 - playerState.wanted)}`;
+    }
+
+    // --- MAIN ENGINE ANIMATION LOOP ---
+    function animate() {
+        requestAnimationFrame(animate);
+
+        const { yaw, pitch } = getCameraAngles();
+
+        // A. Player Walking Physics
+        if (!playerState.inVehicle) {
+            if (Math.abs(moveInput.x) > 0.1 || Math.abs(moveInput.y) > 0.1) {
+                const moveAngle = yaw + Math.atan2(-moveInput.x, -moveInput.y);
+                const walkSpeed = 0.22;
+
+                playerGroup.position.x -= Math.sin(moveAngle) * walkSpeed;
+                playerGroup.position.z -= Math.cos(moveAngle) * walkSpeed;
+                playerGroup.rotation.y = moveAngle + Math.PI;
+            }
+        } 
+        // B. Vehicle Driving Physics
+        else {
+            const v = playerState.inVehicle;
+            const vData = v.userData;
+
+            if (driveInput.gas) {
+                vData.speed = Math.min(1.4, vData.speed + 0.025);
+            } else if (driveInput.brake) {
+                vData.speed = Math.max(-0.5, vData.speed - 0.025);
+            } else {
+                vData.speed *= 0.96; // Natural Friction
+            }
+
+            if (Math.abs(vData.speed) > 0.05) {
+                const turnSpeed = (vData.speed > 0 ? 1 : -1) * 0.035;
+                if (driveInput.left) v.rotation.y += turnSpeed;
+                if (driveInput.right) v.rotation.y -= turnSpeed;
+            }
+
+            v.position.x -= Math.sin(v.rotation.y) * vData.speed;
+            v.position.z -= Math.cos(v.rotation.y) * vData.speed;
+            
+            // Sync Player Group with Vehicle Position
+            playerGroup.position.copy(v.position);
+        }
+
+        // C. Bullet Physics & Life
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            const b = bullets[i];
+            b.position.addScaledVector(b.userData.dir, 1.2);
+            b.userData.life--;
+
+            if (b.userData.life <= 0) {
+                scene.remove(b);
+                bullets.splice(i, 1);
+            }
+        }
+
+        // D. Helicopter Blades Animation & Patrol
+        if (heliGroup.userData.rotor) {
+            heliGroup.userData.rotor.rotation.y += 0.4;
+        }
+
+        // E. Dynamic Camera Target System
+        const targetObj = playerState.inVehicle ? playerState.inVehicle : playerGroup;
+        const camDistance = playerState.inVehicle ? 16 : 9;
+
+        camera.position.x = targetObj.position.x + Math.sin(yaw) * Math.cos(pitch) * camDistance;
+        camera.position.y = targetObj.position.y + Math.sin(pitch) * camDistance + 2.2;
+        camera.position.z = targetObj.position.z + Math.cos(yaw) * Math.cos(pitch) * camDistance;
+
+        camera.lookAt(targetObj.position.x, targetObj.position.y + 1.2, targetObj.position.z);
+
+        renderer.render(scene, camera);
+    }
+
+    // Start Rendering Loop
     animate();
-    window.addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+
+    // Window Resize Handling
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
 });
 </script>
 </body>
