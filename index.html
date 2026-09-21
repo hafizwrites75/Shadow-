@@ -1,210 +1,98 @@
-
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Open City Prototype — Step 25</title>
+<title>Open City Prototype — Mobile Fixed</title>
 <style>
-html,body{margin:0;height:100%;overflow:hidden;background:#111;font-family:Arial,sans-serif}
-#game{display:block;width:100%;height:100%;touch-action:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:Arial,sans-serif}
+#game{display:block;width:100vw;height:100vh;touch-action:none}
 #hint{position:fixed;left:10px;top:10px;padding:8px 11px;border-radius:10px;background:#0009;color:#fff;font-size:13px;z-index:5}
 #wanted{position:fixed;right:18px;top:14px;padding:8px 12px;border-radius:10px;background:#000b;color:#fff;font-weight:700;z-index:7}
 #weapon{position:fixed;left:10px;bottom:150px;padding:7px 10px;border-radius:9px;background:#0009;color:#fff;font-size:13px;z-index:7}
 #health{position:fixed;left:10px;bottom:112px;padding:7px 10px;border-radius:9px;background:#0009;color:#fff;font-size:13px;z-index:7}
-#weatherBtn{position:fixed;left:68px;top:125px;width:48px;height:42px;border:0;border-radius:10px;background:#222;color:#fff;z-index:8;font-size:18px}
-#saveBtn{position:fixed;left:12px;top:125px;width:48px;height:42px;border:0;border-radius:10px;background:#222;color:#fff;z-index:8;font-size:18px}
-#interact{position:fixed;right:110px;bottom:155px;width:58px;height:58px;border-radius:50%;border:0;background:#6b5cff;color:white;font-weight:800;z-index:8}
-#fire{position:fixed;right:22px;bottom:155px;width:72px;height:72px;border:0;border-radius:50%;background:#ffffff;color:#111;font-weight:800;z-index:8}
-#joy{position:fixed;left:22px;bottom:24px;width:112px;height:112px;border-radius:50%;background:#fff2;border:1px solid #fff5;z-index:5;touch-action:none}
+#joy{position:fixed;left:22px;bottom:24px;width:112px;height:112px;border-radius:50%;background:#fff2;border:1px solid #fff5;z-index:5}
 #stick{position:absolute;left:31px;top:31px;width:50px;height:50px;border-radius:50%;background:#fff8}
-#look{position:fixed;right:0;top:0;width:58%;height:72%;z-index:4;touch-action:none}
-#carBtn{position:fixed;right:18px;bottom:24px;z-index:7;border:0;border-radius:14px;padding:13px 16px;background:#ffffffdd;color:#111;font-weight:700}
-#drive{display:none;position:fixed;right:18px;bottom:86px;z-index:7;grid-template-columns:52px 52px 52px;gap:8px}
-#drive button{width:52px;height:52px;border:0;border-radius:13px;background:#ffffffdd;font-size:20px;font-weight:700}
-#gas{grid-column:2}
-#save22{position:fixed;right:14px;top:58px;z-index:9999;display:flex;gap:6px;flex-wrap:wrap;max-width:190px;justify-content:flex-end}
-#save22 button{background:#111b;color:#fff;border:1px solid #ffffff55;border-radius:8px;padding:7px 9px;font-weight:700;backdrop-filter:blur(5px)}
-#save22 button:hover{background:#ffffff22}
-#saveStatus22{width:100%;text-align:right;color:#fff;font-size:12px;text-shadow:0 1px 3px #000}
-#inventory25{position:fixed;left:10px;top:285px;z-index:30;background:#000b;color:#fff;padding:9px 11px;border-radius:11px;font-size:12px;line-height:1.55;min-width:150px;backdrop-filter:blur(5px)}
-#invToast25{position:fixed;left:50%;bottom:125px;transform:translateX(-50%);z-index:80;background:#111e;color:#fff;padding:10px 14px;border-radius:12px;display:none;font-weight:700}
 </style>
 </head>
 <body>
+
 <canvas id="game"></canvas>
-<div id="hint">STEP 25 • Inventory & Consumables</div>
+<div id="hint">STEP 25 • Mobile Optimized</div>
 <div id="wanted">WANTED: ☆☆☆☆☆</div>
 <div id="weapon">🔫 Pistol • Ammo: 12</div>
 <div id="health">❤️ Health: 100 • Armor: 0</div>
-<div id="houseInfo">🏠 گھر: باہر</div>
-<div id="mission">🎯 کوئی مشن فعال نہیں</div>
-<div id="money">💵 $500</div>
-<div id="shopInfo">🏪 Shop: دور</div>
-<div id="vehicleInfo">🚗 Vehicle: باہر</div>
-<div id="worldInfo">🌊 Water: محفوظ</div>
-<div id="wantedInfo">🚨 Wanted: 0/5</div>
-<div id="npcInfo">👥 City NPCs: 0</div>
-<div id="dialogue">💬 شہر میں مشن تلاش کریں</div>
-<div id="buildingInfo">🏢 عمارت: باہر</div>
-<div id="timeInfo">🕒 Day 08:00</div>
-<div id="systemInfo">💾 Auto-save: ON</div>
-<div id="inventory25">🎒 Inventory<br>💊 Medkit: 2<br>🛡️ Armor Plate: 2<br>🔫 Ammo Pack: 2</div>
-<div id="invToast25"></div>
-<button id="fire">FIRE</button><button id="interact">E</button>
-<button id="saveBtn">💾</button><button id="weatherBtn">☀️</button>
 <div id="joy"><div id="stick"></div></div>
-<div id="look"></div>
-<button id="carBtn">🚗 Enter</button>
-<div id="drive" aria-hidden="true">
-  <button id="left">◀</button><button id="brake">■</button><button id="right">▶</button>
-  <button id="gas">▲</button>
-</div>
-<div id="save22"><button id="saveBtn22">💾 Save</button><button id="loadBtn22">📂 Load</button><button id="resetBtn22">↩ Reset</button><div id="saveStatus22">Save system ready</div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  
+
 <script>
-// Global variables definition
-let npcs = [], police = [], policeCars = [];
-let car, bike, boat, plane, helicopter;
-let inCar = false, vehicleType = 'foot', vehicleHP = 100, vehicleFuel = 100;
-let bikeSpeed = 0, boatSpeed = 0;
-let wanted = 0, heliAngle = 0, dialogueTimer = 0, npcTalkTimer = 0;
-let missionActive = false, missionFailed = false, missionNPC = null;
-const keys = { w: false, a: false, s: false, d: false };
-
-const canvas = document.getElementById('game');
-const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x8bb7d9);
-scene.fog = new THREE.Fog(0x8bb7d9, 120, 360);
-
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
-
-scene.add(new THREE.HemisphereLight(0xbfe2ff, 0x39412f, 1.8));
-const sun = new THREE.DirectionalLight(0xffffff, 2.2);
-sun.position.set(80, 130, 50); 
-sun.castShadow = true; 
-scene.add(sun);
-
-const ground = new THREE.Mesh(
- new THREE.PlaneGeometry(500, 500),
- new THREE.MeshStandardMaterial({color: 0x6e8b62, roughness: 1})
-);
-ground.rotation.x = -Math.PI / 2; 
-ground.receiveShadow = true; 
-scene.add(ground);
-
-function box(w, h, d, c, x, y, z){
- const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({color: c}));
- m.position.set(x, y, z); 
- m.castShadow = true; 
- m.receiveShadow = true; 
- scene.add(m); 
- return m;
-}
-
-// City Layout
-const roadMat = new THREE.MeshStandardMaterial({color: 0x30343a});
-function road(w, d, x, z){
- const r = new THREE.Mesh(new THREE.BoxGeometry(w, 0.06, d), roadMat);
- r.position.set(x, 0.03, z); 
- r.receiveShadow = true; 
- scene.add(r);
-}
-for(let i = -160; i <= 160; i += 55){ road(500, 16, 0, i); road(16, 500, i, 0); }
-
-for(let bx = -137; bx <= 137; bx += 55){
- for(let bz = -137; bz <= 137; bz += 55){
-   if(Math.abs(bx) < 25 && Math.abs(bz) < 25) continue;
-   const h = 10 + ((Math.abs(bx * bz) % 27));
-   const w = 32, d = 32;
-   box(w, h, d, 0x8c8178, bx, h / 2, bz);
-   box(w * 0.7, 1.2, d * 0.7, 0x565b61, bx, h + 0.6, bz);
- }
-}
-
-for(let i = -135; i <= 135; i += 55){
- for(const z of [-8, 8]){
-   box(0.3, 6, 0.3, 0x222222, i, 3, z);
-   box(2, 0.15, 2, 0xffe4a1, i, 6, z);
- }
-}
-
-const player = new THREE.Group();
-const body = box(1.2, 1.8, 0.7, 0x315b87, 0, 1, 0);
-body.position.set(0, 1, 0); 
-player.add(body);
-const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 14), new THREE.MeshStandardMaterial({color: 0xc98d68}));
-head.position.set(0, 2.15, 0); 
-head.castShadow = true; 
-player.add(head);
-player.position.set(0, 0, 8); 
-scene.add(player);
-
-function makeCar(color = 0xb53b32){
- const g = new THREE.Group();
- const base = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.65, 4.0), new THREE.MeshStandardMaterial({color, roughness: 0.7}));
- base.position.y = 0.65; base.castShadow = true; g.add(base);
- const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.65, 1.9), new THREE.MeshStandardMaterial({color: 0x27323a, roughness: 0.35, metalness: 0.1}));
- cabin.position.set(0, 1.08, 0.15); cabin.castShadow = true; g.add(cabin);
- for(const x of [-0.88, 0.88]) for(const z of [-1.25, 1.25]){
-   const w = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.22, 16), new THREE.MeshStandardMaterial({color: 0x111111}));
-   w.rotation.z = Math.PI / 2; w.position.set(x, 0.42, z); w.castShadow = true; g.add(w);
- }
- return g;
-}
-car = makeCar(0x2e6fa8); 
-car.position.set(0, 0.05, 28); 
-scene.add(car);
-
-function makeNPC(x, z, enemy = false){
- const g = new THREE.Group();
- const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.34, 0.85, 4, 8), new THREE.MeshStandardMaterial({color: enemy ? 0x7b3030 : 0x4d8060}));
- body.position.y = 1; body.castShadow = true; g.add(body);
- const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 8), new THREE.MeshStandardMaterial({color: 0xc58b67}));
- head.position.y = 1.75; head.castShadow = true; g.add(head);
- g.position.set(x, 0, z); g.userData.enemy = enemy; g.userData.hp = enemy ? 60 : 100; g.userData.dir = Math.random() * Math.PI * 2;
- scene.add(g); npcs.push(g); return g;
-}
-for(let i = 0; i < 10; i++) makeNPC(-120 + (i % 5) * 55, -105 + Math.floor(i / 5) * 80, false);
-
-let insideHouse = false;
-const house = new THREE.Group();
-house.add(box(18, 7, 14, 0xc9a66b, 85, 3.5, -70));
-house.add(box(5, 3, 0.5, 0x5a351f, 85, 1.5, -62.75));
-house.position.y = 0;
-scene.add(house);
-
-function startDeliveryMission() {
-    console.log("Mission Started!");
-}
-
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-// Render Loop
-function animate() {
-    requestAnimationFrame(animate);
+window.addEventListener('DOMContentLoaded', () => {
+    const canvas = document.getElementById('game');
     
-    // Camera follow player logic
-    if (player) {
-        camera.position.x = player.position.x;
-        camera.position.y = player.position.y + 6;
-        camera.position.z = player.position.z + 12;
-        camera.lookAt(player.position);
+    // Fallback Canvas WebGL Renderer for Mobile
+    let renderer;
+    try {
+        renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, powerPreference: "high-performance" });
+    } catch (e) {
+        alert("WebGL Not Supported on this Browser");
+        return;
     }
-    
-    renderer.render(scene, camera);
-}
 
-animate();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x8bb7d9);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+    camera.position.set(0, 8, 16);
+
+    // Basic Lighting (No heavy shadows for Mobile performance)
+    const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
+    scene.add(light);
+
+    // Ground
+    const groundMat = new THREE.MeshBasicMaterial({ color: 0x6e8b62 });
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
+
+    // City Buildings
+    const bMat = new THREE.MeshBasicMaterial({ color: 0x7a7a7a });
+    for(let x = -80; x <= 80; x += 40) {
+        for(let z = -80; z <= 80; z += 40) {
+            if(Math.abs(x) < 20 && Math.abs(z) < 20) continue;
+            const b = new THREE.Mesh(new THREE.BoxGeometry(18, 25, 18), bMat);
+            b.position.set(x, 12.5, z);
+            scene.add(b);
+        }
+    }
+
+    // Player Object
+    const pMat = new THREE.MeshBasicMaterial({ color: 0x315b87 });
+    const player = new THREE.Mesh(new THREE.BoxGeometry(1.5, 3, 1.5), pMat);
+    player.position.set(0, 1.5, 0);
+    scene.add(player);
+
+    camera.lookAt(player.position);
+
+    // Resize Handler
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Render Loop
+    function animate() {
+        requestAnimationFrame(animate);
+        player.rotation.y += 0.01; // Simple Rotation Test
+        renderer.render(scene, camera);
+    }
+
+    animate();
+});
 </script>
 </body>
 </html>
