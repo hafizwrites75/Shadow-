@@ -1,68 +1,43 @@
 <!doctype html>
-<html lang="en">
+<html lang="ur">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Open City — Advanced Car & Foot Controls</title>
+<title>GTA Vice City True Style</title>
 <style>
 html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:Arial,sans-serif;user-select:none}
 #game{display:block;width:100vw;height:100vh;touch-action:none}
-#hud{position:fixed;top:10px;left:10px;z-index:10;color:#fff;font-size:13px;display:flex;flex-direction:column;gap:5px}
-.hud-box{background:rgba(0,0,0,0.7);padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.2)}
-#wanted{position:fixed;right:15px;top:10px;z-index:10;background:rgba(0,0,0,0.8);color:#ffcc00;padding:8px 12px;border-radius:8px;font-weight:bold}
-#money{position:fixed;right:15px;top:50px;z-index:10;color:#00ff66;font-size:18px;font-weight:bold;text-shadow:1px 1px 2px #000}
 
-/* Buttons Styling */
-.btn{position:fixed;z-index:10;border-radius:50%;border:none;font-weight:bold;color:#fff;box-shadow:0 4px 6px rgba(0,0,0,0.4);touch-action:none}
-#runBtn{left:25px;bottom:30px;width:80px;height:80px;background:#27ae60;font-size:16px}
-#fireBtn{right:25px;bottom:120px;width:70px;height:70px;background:#e74c3c;font-size:14px}
-#carBtn{right:25px;bottom:30px;width:70px;height:70px;background:#3498db;font-size:12px}
+/* Action Buttons */
+.btn{position:fixed;z-index:10;border-radius:50%;border:2px solid #fff;font-weight:bold;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,0.7);touch-action:none}
+#runBtn{left:25px;bottom:30px;width:75px;height:75px;background:#e84393;font-size:15px} /* Vice City Pink */
+#carBtn{right:25px;bottom:25px;width:70px;height:70px;background:#0984e3;font-size:12px}
+#doorBtn{left:50%;bottom:30px;transform:translateX(-50%);padding:12px 24px;background:#fdcb6e;color:#000;border-radius:20px;border:2px solid #fff;font-weight:bold;display:none;z-index:10}
 
-/* Car Controls Overlay (4 Buttons) */
-#carControls{position:fixed;left:20px;bottom:20px;z-index:10;display:none;width:160px;height:160px}
-.c-btn{position:absolute;width:50px;height:50px;border-radius:10px;border:none;background:rgba(255,255,255,0.8);color:#000;font-size:20px;font-weight:bold;box-shadow:0 3px 5px rgba(0,0,0,0.5);touch-action:none}
-#cUp{top:0;left:55px}
-#cDown{bottom:0;left:55px}
-#cLeft{top:55px;left:0}
-#cRight{top:55px;right:0}
-
-#touchLook{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:5}
-#saveMenu{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:10px}
-#saveMenu button{background:#222;color:#fff;border:1px solid #555;padding:6px 12px;border-radius:6px;font-weight:bold}
+/* Vehicle Drive Controls */
+.car-steer-group{position:fixed;left:20px;bottom:30px;z-index:10;display:none;gap:15px}
+.car-accel-group{position:fixed;right:20px;bottom:30px;z-index:10;display:none;flex-direction:column;gap:15px}
+.c-btn{width:65px;height:65px;border-radius:15px;border:2px solid #fff;background:rgba(20,20,20,0.85);color:#fff;font-size:24px;font-weight:bold;touch-action:none}
 </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
 
-<!-- Touch Area for Camera Look & Swipe Direction -->
-<div id="touchLook"></div>
-
-<div id="saveMenu">
-  <button onclick="saveGame()">💾 Save</button>
-  <button onclick="loadGame()">📂 Load</button>
-</div>
-
-<div id="hud">
-  <div class="hud-box" id="weapon">🔫 Pistol • Ammo: 30</div>
-  <div class="hud-box" id="health">❤️ Health: 100 • 🛡️ Armor: 50</div>
-  <div class="hud-box" id="mission">🎯 Open City Loaded</div>
-</div>
-
-<div id="wanted">WANTED: ☆☆☆☆☆</div>
-<div id="money">$00001500</div>
-
-<!-- On-Foot Controls -->
+<!-- Buttons -->
 <button class="btn" id="runBtn">🏃 RUN</button>
-<button class="btn" id="fireBtn">FIRE</button>
-<button class="btn" id="carBtn">🚗 Enter</button>
+<button class="btn" id="carBtn">🚗 ENTER</button>
+<button id="doorBtn">🚪 OPEN DOOR</button>
 
-<!-- Car Movement Controls (4 Buttons) -->
-<div id="carControls">
-  <button class="c-btn" id="cUp">⬆️</button>
-  <button class="c-btn" id="cDown">⬇️</button>
+<!-- Driving Controls -->
+<div class="car-steer-group" id="steerGroup">
   <button class="c-btn" id="cLeft">⬅️</button>
   <button class="c-btn" id="cRight">➡️</button>
+</div>
+
+<div class="car-accel-group" id="accelGroup">
+  <button class="c-btn" id="cUp">⬆️</button>
+  <button class="c-btn" id="cDown">⬇️</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -70,201 +45,272 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:Arial
 <script>
 window.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('game');
-    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, powerPreference: "high-performance" });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87ceeb);
+    scene.background = new THREE.Color(0x74b9ff); // Vice City Sky Blue
 
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-    const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
+    // Sun & Lighting
+    const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1.4);
     scene.add(light);
-    const sun = new THREE.DirectionalLight(0xffffff, 1.3);
-    sun.position.set(100, 150, 50);
+    const sun = new THREE.DirectionalLight(0xfffae0, 1.5);
+    sun.position.set(150, 200, 100);
     scene.add(sun);
 
-    // City Ground & Roads
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), new THREE.MeshLambertMaterial({ color: 0x477836 }));
-    ground.rotation.x = -Math.PI / 2;
-    scene.add(ground);
+    // 1. OCEAN (Vice City Beach Water)
+    const ocean = new THREE.Mesh(new THREE.PlaneGeometry(1200, 1200), new THREE.MeshLambertMaterial({ color: 0x00cec9 }));
+    ocean.rotation.x = -Math.PI / 2;
+    ocean.position.y = -0.5;
+    scene.add(ocean);
 
-    const roadMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
-    const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    // 2. VICE CITY ISLANDS
+    const island1 = new THREE.Mesh(new THREE.BoxGeometry(450, 2, 800), new THREE.MeshLambertMaterial({ color: 0x55efc4 }));
+    island1.position.set(-250, 0, 0); scene.add(island1);
 
-    for(let i = -240; i <= 240; i += 80) {
-        const r1 = new THREE.Mesh(new THREE.BoxGeometry(800, 0.1, 20), roadMat);
-        r1.position.set(0, 0.05, i); scene.add(r1);
+    const island2 = new THREE.Mesh(new THREE.BoxGeometry(450, 2, 800), new THREE.MeshLambertMaterial({ color: 0x55efc4 }));
+    island2.position.set(250, 0, 0); scene.add(island2);
 
-        const r2 = new THREE.Mesh(new THREE.BoxGeometry(20, 0.1, 800), roadMat);
-        r2.position.set(i, 0.05, 0); scene.add(r2);
+    // 3. MAIN BRIDGE
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(100, 3, 40), new THREE.MeshLambertMaterial({ color: 0x636e72 }));
+    bridge.position.set(0, 1.5, 0); scene.add(bridge);
 
-        for(let j = -380; j <= 380; j += 20) {
-            const l1 = new THREE.Mesh(new THREE.BoxGeometry(8, 0.12, 0.8), lineMat);
-            l1.position.set(j, 0.06, i); scene.add(l1);
-            const l2 = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.12, 8), lineMat);
-            l2.position.set(i, 0.06, j); scene.add(l2);
-        }
+    // Roads
+    const road1 = new THREE.Mesh(new THREE.PlaneGeometry(30, 800), new THREE.MeshLambertMaterial({ color: 0x2d3436 }));
+    road1.rotation.x = -Math.PI / 2; road1.position.set(-200, 1.1, 0); scene.add(road1);
+
+    const road2 = new THREE.Mesh(new THREE.PlaneGeometry(30, 800), new THREE.MeshLambertMaterial({ color: 0x2d3436 }));
+    road2.rotation.x = -Math.PI / 2; road2.position.set(200, 1.1, 0); scene.add(road2);
+
+    // 4. VICE CITY BUILDINGS (Ocean Drive Style Colors: Pink, Cyan, Yellow, White)
+    const vcColors = [0xfd79a8, 0x81ecec, 0xffebe9, 0xfffe6a, 0xa29bfe];
+    for (let i = -350; i < 350; i += 70) {
+        if(Math.abs(i) < 40) continue;
+        
+        const h1 = 25 + Math.random() * 35;
+        const b1 = new THREE.Mesh(new THREE.BoxGeometry(35, h1, 35), new THREE.MeshLambertMaterial({ color: vcColors[Math.floor(Math.random()*vcColors.length)] }));
+        b1.position.set(-270, h1/2 + 1, i);
+        scene.add(b1);
+
+        const h2 = 25 + Math.random() * 35;
+        const b2 = new THREE.Mesh(new THREE.BoxGeometry(35, h2, 35), new THREE.MeshLambertMaterial({ color: vcColors[Math.floor(Math.random()*vcColors.length)] }));
+        b2.position.set(270, h2/2 + 1, i);
+        scene.add(b2);
     }
 
-    // City Buildings
-    const buildingColors = [0xd5dbdb, 0x34495e, 0x95a5a6, 0xe67e22, 0x27ae60, 0x2980b9];
-    for(let bx = -200; bx <= 200; bx += 80) {
-        for(let bz = -200; bz <= 200; bz += 80) {
-            if(Math.abs(bx) < 40 && Math.abs(bz) < 40) continue;
-            const h = 20 + Math.floor(Math.random() * 35);
-            const b = new THREE.Mesh(new THREE.BoxGeometry(50, h, 50), new THREE.MeshLambertMaterial({ color: buildingColors[Math.floor(Math.random() * buildingColors.length)] }));
-            b.position.set(bx, h / 2, bz); scene.add(b);
-        }
+    // 5. PLAYER SAFEHOUSE & STAIRS
+    const houseGroup = new THREE.Group();
+    houseGroup.position.set(-160, 1, -100);
+
+    const houseWall = new THREE.Mesh(new THREE.BoxGeometry(30, 16, 25), new THREE.MeshLambertMaterial({ color: 0xfab1a0 }));
+    houseWall.position.set(0, 8, 0); houseGroup.add(houseWall);
+
+    for(let i=0; i<5; i++){
+        const step = new THREE.Mesh(new THREE.BoxGeometry(10, 0.6, 1.5), new THREE.MeshLambertMaterial({ color: 0xdfe6e9 }));
+        step.position.set(0, i*0.6 + 0.3, 12.5 + (i*1.4));
+        houseGroup.add(step);
     }
 
-    // Player Object
-    const player = new THREE.Group();
-    const pBody = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.0, 0.8), new THREE.MeshLambertMaterial({ color: 0x2980b9 }));
-    pBody.position.y = 1.0; player.add(pBody);
-    const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.4, 12, 12), new THREE.MeshLambertMaterial({ color: 0xf1c40f }));
-    pHead.position.y = 2.2; player.add(pHead);
-    player.position.set(0, 0, 10);
-    scene.add(player);
+    const doorPivot = new THREE.Group();
+    doorPivot.position.set(-2.5, 1, 12.5);
+    const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(5, 8, 0.4), new THREE.MeshLambertMaterial({ color: 0x6c5ce7 }));
+    doorMesh.position.set(2.5, 4, 0);
+    doorPivot.add(doorMesh);
+    houseGroup.add(doorPivot);
+    scene.add(houseGroup);
 
-    // Car Object
+    let isDoorOpen = false;
+
+    // 6. HELICOPTER ON ROOFTOP
+    const heliGroup = new THREE.Group();
+    const hBody = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 16), new THREE.MeshLambertMaterial({ color: 0xfdcb6e }));
+    const hRotor = new THREE.Mesh(new THREE.BoxGeometry(12, 0.1, 0.8), new THREE.MeshLambertMaterial({ color: 0x2d3436 }));
+    hRotor.position.y = 3.2;
+    heliGroup.add(hBody); heliGroup.add(hRotor);
+    heliGroup.position.set(-160, 19, -100);
+    scene.add(heliGroup);
+
+    // 7. SPORTS CAR
     const car = new THREE.Group();
-    const cBase = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.9, 4.8), new THREE.MeshLambertMaterial({ color: 0xc0392b }));
-    cBase.position.y = 0.45; car.add(cBase);
-    const cTop = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.8, 2.4), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-    cTop.position.set(0, 1.25, -0.2); car.add(cTop);
-    car.position.set(10, 0.1, 20);
+    const cBase = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.0, 5.2), new THREE.MeshLambertMaterial({ color: 0xd63031 }));
+    cBase.position.y = 0.5; car.add(cBase);
+    const cTop = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 2.6), new THREE.MeshLambertMaterial({ color: 0x2d3436 }));
+    cTop.position.set(0, 1.3, -0.2); car.add(cTop);
+    car.position.set(-185, 1.5, -80);
     scene.add(car);
 
-    let inCar = false;
-    let isRunning = false;
-    let ammo = 30;
-    let wantedStars = 0;
-    let cameraAngle = 0;
+    let carSpeed = 0;
+    const maxSpeed = 1.2, accel = 0.02, friction = 0.96;
 
-    // Car Direction Controls State
+    // 8. TRAFFIC CARS
+    const trafficCars = [];
+    const carColors = [0xd63031, 0x00b894, 0xfdcb6e, 0x0984e3, 0x6c5ce7];
+
+    function createTrafficCar(x, z, dir) {
+        const tCar = new THREE.Group();
+        const col = carColors[Math.floor(Math.random() * carColors.length)];
+        const body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.9, 4.8), new THREE.MeshLambertMaterial({ color: col }));
+        body.position.y = 0.45; tCar.add(body);
+        const top = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.7, 2.2), new THREE.MeshLambertMaterial({ color: 0x2d3436 }));
+        top.position.set(0, 1.2, -0.1); tCar.add(top);
+        tCar.position.set(x, 1.5, z);
+        tCar.userData = { speed: 0.35 + Math.random() * 0.2, direction: dir };
+        scene.add(tCar);
+        trafficCars.push(tCar);
+    }
+
+    for(let i = 0; i < 10; i++) {
+        const posX = (i % 2 === 0) ? -200 : 200;
+        createTrafficCar(posX + (i%2===0 ? 5 : -5), -350 + (i * 70), i % 2 === 0 ? 1 : -1);
+    }
+
+    // 9. PLAYER CHARACTER (Tommy Vercetti Cyan Shirt)
+    const player = new THREE.Group();
+    const pBody = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.2, 0.9), new THREE.MeshLambertMaterial({ color: 0x00cec9 }));
+    pBody.position.y = 1.1; player.add(pBody);
+    const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 12), new THREE.MeshLambertMaterial({ color: 0xffeaa7 }));
+    pHead.position.y = 2.4; player.add(pHead);
+    player.position.set(-160, 1.5, -80);
+    scene.add(player);
+
+    let inCar = false, isRunning = false;
+    let cameraYaw = 0, cameraPitch = 0.3;
     const carInput = { up: false, down: false, left: false, right: false };
 
-    // Player Run Button Controls
+    // --- FIX FOR MULTI-TOUCH CAMERA FLIP WHILE RUNNING ---
+    let cameraTouchId = null;
+    let lastX = 0, lastY = 0;
+
     const runBtn = document.getElementById('runBtn');
-    runBtn.addEventListener('touchstart', (e) => { e.preventDefault(); isRunning = true; });
-    runBtn.addEventListener('touchend', (e) => { e.preventDefault(); isRunning = false; });
+    runBtn.addEventListener('touchstart', (e) => { 
+        e.preventDefault(); 
+        isRunning = true; 
+    }, {passive: false});
 
-    // Finger Touch Swipe for Camera & Direction Turn
-    let lastTouchX = 0;
-    const touchLook = document.getElementById('touchLook');
-    touchLook.addEventListener('touchstart', (e) => { lastTouchX = e.touches[0].clientX; });
-    touchLook.addEventListener('touchmove', (e) => {
-        const deltaX = e.touches[0].clientX - lastTouchX;
-        cameraAngle -= deltaX * 0.012;
-        lastTouchX = e.touches[0].clientX;
-    });
+    runBtn.addEventListener('touchend', (e) => { 
+        e.preventDefault(); 
+        isRunning = false; 
+    }, {passive: false});
 
-    // Car 4 Buttons Event Listeners
-    const setupCarBtn = (id, key) => {
-        const btn = document.getElementById(id);
-        btn.addEventListener('touchstart', (e) => { e.preventDefault(); carInput[key] = true; });
-        btn.addEventListener('touchend', (e) => { e.preventDefault(); carInput[key] = false; });
-    };
-    setupCarBtn('cUp', 'up');
-    setupCarBtn('cDown', 'down');
-    setupCarBtn('cLeft', 'left');
-    setupCarBtn('cRight', 'right');
-
-    // Fire Button
-    document.getElementById('fireBtn').addEventListener('click', () => {
-        if (ammo > 0) {
-            ammo--;
-            document.getElementById('weapon').textContent = `🔫 Pistol • Ammo: ${ammo}`;
-            const bullet = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfff000 }));
-            bullet.position.copy(player.position);
-            bullet.position.y += 1.5;
-            scene.add(bullet);
-            setTimeout(() => scene.remove(bullet), 300);
-
-            if (wantedStars < 5) {
-                wantedStars++;
-                document.getElementById('wanted').textContent = `WANTED: ${'★'.repeat(wantedStars)}${'☆'.repeat(5 - wantedStars)}`;
+    window.addEventListener('touchstart', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            const touch = e.changedTouches[i];
+            if (touch.target !== runBtn && !touch.target.classList.contains('c-btn') && touch.target !== carBtn && touch.target !== doorBtn) {
+                cameraTouchId = touch.identifier;
+                lastX = touch.clientX;
+                lastY = touch.clientY;
+                break;
             }
         }
     });
 
-    // Enter / Exit Vehicle
-    const carBtn = document.getElementById('carBtn');
-    const carControlsUI = document.getElementById('carControls');
-    carBtn.addEventListener('click', () => {
-        if (!inCar && player.position.distanceTo(car.position) < 6) {
-            inCar = true;
-            player.visible = false;
-            carBtn.textContent = '🚶 Exit';
-            runBtn.style.display = 'none';
-            carControlsUI.style.display = 'block';
-        } else if (inCar) {
-            inCar = false;
-            player.position.copy(car.position);
-            player.position.x += 3.5;
-            player.visible = true;
-            carBtn.textContent = '🚗 Enter';
-            runBtn.style.display = 'block';
-            carControlsUI.style.display = 'none';
+    window.addEventListener('touchmove', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            const touch = e.changedTouches[i];
+            if (touch.identifier === cameraTouchId) {
+                const dx = touch.clientX - lastX;
+                const dy = touch.clientY - lastY;
+                cameraYaw -= dx * 0.008;
+                cameraPitch = Math.max(-0.4, Math.min(1.2, cameraPitch + dy * 0.008));
+                lastX = touch.clientX;
+                lastY = touch.clientY;
+            }
         }
     });
 
-    // Save & Load Functions
-    window.saveGame = function() {
-        localStorage.setItem('viceSave', JSON.stringify({ x: player.position.x, z: player.position.z, ammo: ammo, stars: wantedStars }));
-        alert('Game Saved!');
-    };
-    window.loadGame = function() {
-        const data = JSON.parse(localStorage.getItem('viceSave'));
-        if (data) {
-            player.position.set(data.x, 0, data.z);
-            ammo = data.ammo; wantedStars = data.stars;
-            document.getElementById('weapon').textContent = `🔫 Pistol • Ammo: ${ammo}`;
-            document.getElementById('wanted').textContent = `WANTED: ${'★'.repeat(wantedStars)}${'☆'.repeat(5 - wantedStars)}`;
-            alert('Game Loaded!');
+    window.addEventListener('touchend', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === cameraTouchId) {
+                cameraTouchId = null;
+            }
         }
-    };
+    });
 
-    // Render Loop
+    // Driving Controls Setup
+    const setupBtn = (id, key) => {
+        const btn = document.getElementById(id);
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); carInput[key] = true; }, {passive: false});
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); carInput[key] = false; }, {passive: false});
+    };
+    setupBtn('cUp', 'up'); setupBtn('cDown', 'down');
+    setupBtn('cLeft', 'left'); setupBtn('cRight', 'right');
+
+    // Vehicle Enter/Exit
+    const carBtn = document.getElementById('carBtn');
+    const steerGroup = document.getElementById('steerGroup');
+    const accelGroup = document.getElementById('accelGroup');
+
+    carBtn.addEventListener('click', () => {
+        if (!inCar && player.position.distanceTo(car.position) < 10) {
+            inCar = true; player.visible = false;
+            carBtn.textContent = '🚶 EXIT'; runBtn.style.display = 'none';
+            steerGroup.style.display = 'flex'; accelGroup.style.display = 'flex';
+        } else if (inCar) {
+            inCar = false; player.position.copy(car.position); player.position.x += 4; player.visible = true;
+            carBtn.textContent = '🚗 ENTER'; runBtn.style.display = 'block';
+            steerGroup.style.display = 'none'; accelGroup.style.display = 'none';
+        }
+    });
+
+    // Door Open/Close Action
+    const doorBtn = document.getElementById('doorBtn');
+    doorBtn.addEventListener('click', () => {
+        isDoorOpen = !isDoorOpen;
+        doorPivot.rotation.y = isDoorOpen ? -Math.PI / 2 : 0;
+    });
+
+    // MAIN GAME ANIMATION LOOP
     function animate() {
         requestAnimationFrame(animate);
 
-        if (!inCar) {
-            // Player Movement (On-Foot)
-            if (isRunning) {
-                const speed = 0.35;
-                const moveX = Math.sin(cameraAngle);
-                const moveZ = Math.cos(cameraAngle);
+        hRotor.rotation.y += 0.25;
 
-                player.position.x -= moveX * speed;
-                player.position.z -= moveZ * speed;
-                player.rotation.y = cameraAngle + Math.PI;
+        // Traffic AI
+        trafficCars.forEach(tc => {
+            tc.position.z += tc.userData.speed * tc.userData.direction;
+            if(tc.position.z > 380) tc.position.z = -380;
+            if(tc.position.z < -380) tc.position.z = 380;
+        });
+
+        if (!inCar) {
+            if (isRunning) {
+                const speed = 0.5;
+                player.position.x -= Math.sin(cameraYaw) * speed;
+                player.position.z -= Math.cos(cameraYaw) * speed;
+                player.rotation.y = cameraYaw + Math.PI;
+            }
+
+            const doorPos = new THREE.Vector3(-160, 1, -87);
+            if(player.position.distanceTo(doorPos) < 10) {
+                doorBtn.style.display = 'block';
+            } else {
+                doorBtn.style.display = 'none';
             }
         } else {
-            // Car Movement (4 Buttons)
-            const carSpeed = 0.50;
-            if (carInput.left) car.rotation.y += 0.04;
-            if (carInput.right) car.rotation.y -= 0.04;
+            if (carInput.up) carSpeed = Math.min(maxSpeed, carSpeed + accel);
+            else if (carInput.down) carSpeed = Math.max(-maxSpeed * 0.5, carSpeed - accel);
+            else carSpeed *= friction;
 
-            if (carInput.up) {
-                car.position.x -= Math.sin(car.rotation.y) * carSpeed;
-                car.position.z -= Math.cos(car.rotation.y) * carSpeed;
+            if (Math.abs(carSpeed) > 0.02) {
+                const dir = carSpeed > 0 ? 1 : -1;
+                if (carInput.left) car.rotation.y += 0.04 * dir;
+                if (carInput.right) car.rotation.y -= 0.04 * dir;
             }
-            if (carInput.down) {
-                car.position.x += Math.sin(car.rotation.y) * (carSpeed * 0.5);
-                car.position.z += Math.cos(car.rotation.y) * (carSpeed * 0.5);
-            }
+
+            car.position.x -= Math.sin(car.rotation.y) * carSpeed;
+            car.position.z -= Math.cos(car.rotation.y) * carSpeed;
         }
 
-        // Camera Follow Logic
-        const activeObj = inCar ? car : player;
-        const camDistance = inCar ? 22 : 18;
-        camera.position.x = activeObj.position.x + Math.sin(cameraAngle) * camDistance;
-        camera.position.y = activeObj.position.y + 10;
-        camera.position.z = activeObj.position.z + Math.cos(cameraAngle) * camDistance;
-        camera.lookAt(activeObj.position);
+        // Smooth Camera Follow
+        const target = inCar ? car : player;
+        const dist = inCar ? 25 : 18;
+        camera.position.x = target.position.x + Math.sin(cameraYaw) * Math.cos(cameraPitch) * dist;
+        camera.position.y = target.position.y + Math.sin(cameraPitch) * dist + 4;
+        camera.position.z = target.position.z + Math.cos(cameraYaw) * Math.cos(cameraPitch) * dist;
+        camera.lookAt(target.position.x, target.position.y + 2, target.position.z);
 
         renderer.render(scene, camera);
     }
