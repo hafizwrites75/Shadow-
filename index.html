@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Open City Prototype — Mobile Fixed</title>
+<title>Open City Prototype — Step 25</title>
 <style>
 html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:Arial,sans-serif}
 #game{display:block;width:100vw;height:100vh;touch-action:none}
@@ -11,18 +11,26 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:Arial
 #wanted{position:fixed;right:18px;top:14px;padding:8px 12px;border-radius:10px;background:#000b;color:#fff;font-weight:700;z-index:7}
 #weapon{position:fixed;left:10px;bottom:150px;padding:7px 10px;border-radius:9px;background:#0009;color:#fff;font-size:13px;z-index:7}
 #health{position:fixed;left:10px;bottom:112px;padding:7px 10px;border-radius:9px;background:#0009;color:#fff;font-size:13px;z-index:7}
-#joy{position:fixed;left:22px;bottom:24px;width:112px;height:112px;border-radius:50%;background:#fff2;border:1px solid #fff5;z-index:5}
-#stick{position:absolute;left:31px;top:31px;width:50px;height:50px;border-radius:50%;background:#fff8}
+
+/* Joystick Styling */
+#joy{position:fixed;left:25px;bottom:25px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.4);z-index:10;touch-action:none}
+#stick{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.8);pointer-events:none}
+
+/* Action Buttons */
+#actionBtn{position:fixed;right:25px;bottom:35px;width:75px;height:75px;border-radius:50%;background:#ffffffdd;color:#111;font-weight:bold;font-size:15px;border:none;z-index:10}
 </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
-<div id="hint">STEP 25 • Mobile Optimized</div>
+<div id="hint">STEP 25 • Mobile Active Joystick & Driving</div>
 <div id="wanted">WANTED: ☆☆☆☆☆</div>
 <div id="weapon">🔫 Pistol • Ammo: 12</div>
 <div id="health">❤️ Health: 100 • Armor: 0</div>
+
+<!-- Joystick & Drive Button -->
 <div id="joy"><div id="stick"></div></div>
+<button id="actionBtn">🚗 Enter</button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
@@ -30,15 +38,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:Arial
 window.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('game');
     
-    // Fallback Canvas WebGL Renderer for Mobile
-    let renderer;
-    try {
-        renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, powerPreference: "high-performance" });
-    } catch (e) {
-        alert("WebGL Not Supported on this Browser");
-        return;
-    }
-
+    // WebGL Renderer Setup
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -46,52 +47,143 @@ window.addEventListener('DOMContentLoaded', () => {
     scene.background = new THREE.Color(0x8bb7d9);
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
-    camera.position.set(0, 8, 16);
 
-    // Basic Lighting (No heavy shadows for Mobile performance)
+    // Light
     const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
     scene.add(light);
 
     // Ground
-    const groundMat = new THREE.MeshBasicMaterial({ color: 0x6e8b62 });
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), groundMat);
+    const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(300, 300),
+        new THREE.MeshBasicMaterial({ color: 0x557a46 })
+    );
     ground.rotation.x = -Math.PI / 2;
     scene.add(ground);
 
-    // City Buildings
+    // Buildings
     const bMat = new THREE.MeshBasicMaterial({ color: 0x7a7a7a });
     for(let x = -80; x <= 80; x += 40) {
         for(let z = -80; z <= 80; z += 40) {
-            if(Math.abs(x) < 20 && Math.abs(z) < 20) continue;
+            if(x === 0 && z === 0) continue;
             const b = new THREE.Mesh(new THREE.BoxGeometry(18, 25, 18), bMat);
             b.position.set(x, 12.5, z);
             scene.add(b);
         }
     }
 
-    // Player Object
-    const pMat = new THREE.MeshBasicMaterial({ color: 0x315b87 });
-    const player = new THREE.Mesh(new THREE.BoxGeometry(1.5, 3, 1.5), pMat);
+    // Player Object (Blue Box)
+    const player = new THREE.Mesh(
+        new THREE.BoxGeometry(1.6, 3, 1.6),
+        new THREE.MeshBasicMaterial({ color: 0x2255be })
+    );
     player.position.set(0, 1.5, 0);
     scene.add(player);
 
-    camera.lookAt(player.position);
+    // Car Object (Red Box)
+    const car = new THREE.Mesh(
+        new THREE.BoxGeometry(3, 1.5, 5),
+        new THREE.MeshBasicMaterial({ color: 0xcc2222 })
+    );
+    car.position.set(8, 0.75, 5);
+    scene.add(car);
 
-    // Resize Handler
+    let inCar = false;
+    let joystickDir = { x: 0, y: 0 };
+
+    // --- Touch Joystick Logic ---
+    const joy = document.getElementById('joy');
+    const stick = document.getElementById('stick');
+    let joyActive = false;
+    let joyCenter = { x: 0, y: 0 };
+
+    joy.addEventListener('touchstart', (e) => {
+        joyActive = true;
+        const rect = joy.getBoundingClientRect();
+        joyCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        handleTouch(e.touches[0]);
+    });
+
+    joy.addEventListener('touchmove', (e) => {
+        if (!joyActive) return;
+        handleTouch(e.touches[0]);
+    });
+
+    const resetStick = () => {
+        joyActive = false;
+        stick.style.left = '35px';
+        stick.style.top = '35px';
+        joystickDir = { x: 0, y: 0 };
+    };
+
+    joy.addEventListener('touchend', resetStick);
+    joy.addEventListener('touchcancel', resetStick);
+
+    function handleTouch(touch) {
+        const dx = touch.clientX - joyCenter.x;
+        const dy = touch.clientY - joyCenter.y;
+        const dist = Math.min(Math.hypot(dx, dy), 40);
+        const angle = Math.atan2(dy, dx);
+
+        const moveX = Math.cos(angle) * dist;
+        const moveY = Math.sin(angle) * dist;
+
+        stick.style.left = (35 + moveX) + 'px';
+        stick.style.top = (35 + moveY) + 'px';
+
+        joystickDir.x = moveX / 40; // -1 to 1
+        joystickDir.y = moveY / 40; // -1 to 1
+    }
+
+    // --- Action Button (Enter / Exit Car) ---
+    const actionBtn = document.getElementById('actionBtn');
+    actionBtn.addEventListener('click', () => {
+        const distToCar = player.position.distanceTo(car.position);
+        
+        if (!inCar && distToCar < 6) {
+            inCar = true;
+            player.visible = false;
+            actionBtn.textContent = '🚶 Exit';
+        } else if (inCar) {
+            inCar = false;
+            player.position.copy(car.position);
+            player.position.x += 3;
+            player.visible = true;
+            actionBtn.textContent = '🚗 Enter';
+        }
+    });
+
+    // --- Animation & Movement Loop ---
+    function animate() {
+        requestAnimationFrame(animate);
+
+        const speed = 0.15;
+        const activeObj = inCar ? car : player;
+
+        if (joystickDir.x !== 0 || joystickDir.y !== 0) {
+            // Movement logic
+            activeObj.position.x += joystickDir.x * speed;
+            activeObj.position.z += joystickDir.y * speed;
+
+            // Rotation towards movement direction
+            activeObj.rotation.y = Math.atan2(-joystickDir.x, -joystickDir.y);
+        }
+
+        // Camera Follows Active Object
+        camera.position.x = activeObj.position.x;
+        camera.position.y = activeObj.position.y + 10;
+        camera.position.z = activeObj.position.z + 18;
+        camera.lookAt(activeObj.position);
+
+        renderer.render(scene, camera);
+    }
+
+    animate();
+
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
-
-    // Render Loop
-    function animate() {
-        requestAnimationFrame(animate);
-        player.rotation.y += 0.01; // Simple Rotation Test
-        renderer.render(scene, camera);
-    }
-
-    animate();
 });
 </script>
 </body>
