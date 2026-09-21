@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,7 +24,7 @@
   /* Notification Toast */
   #notification { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #333; pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 20; text-align: center; }
 
-  /* Touch Touch Camera Layer */
+  /* Touch Camera Layer */
   #cameraTouchZone { position: fixed; top: 0; right: 0; width: 65vw; height: 100vh; z-index: 2; touch-action: none; }
 
   /* On-Screen Joystick Container */
@@ -33,7 +32,7 @@
   #joystickKnob { width: 48px; height: 48px; border-radius: 50%; background: rgba(255, 255, 255, 0.75); box-shadow: 0 0 10px rgba(0,0,0,0.5); pointer-events: none; }
 
   /* Action Buttons Grid */
-  .action-btn { position: fixed; z-index: 10; border: none; border-radius: 50%; color: #fff; font-weight: bold; display: flex; justify-content: center; align-items: center; touch-action: none; box-shadow: 0 4px 12px rgba(0,0,0,0.6); active: transform scale(0.92); }
+  .action-btn { position: fixed; z-index: 10; border: none; border-radius: 50%; color: #fff; font-weight: bold; display: flex; justify-content: center; align-items: center; touch-action: none; box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
   .action-btn:active { transform: scale(0.9); }
 
   #btnFire { right: 95px; bottom: 25px; width: 62px; height: 62px; background: radial-gradient(circle, #ff4757, #ff6b81); font-size: 13px; }
@@ -41,7 +40,7 @@
   #btnInteract { right: 25px; bottom: 100px; width: 52px; height: 52px; background: radial-gradient(circle, #70a1ff, #1e90ff); font-size: 16px; }
   #btnWeapon { right: 95px; bottom: 100px; width: 52px; height: 52px; background: radial-gradient(circle, #ffa502, #ff7f50); font-size: 12px; }
 
-  /* Driving UI Controls (Car / Bike / Boat) */
+  /* Driving UI Controls */
   .drive-panel { position: fixed; bottom: 25px; display: none; z-index: 10; }
   #driveSteerPanel { left: 20px; gap: 12px; }
   #driveAccelPanel { right: 20px; flex-direction: column; gap: 12px; }
@@ -95,9 +94,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
-// --- PART 2: WORLD GENERATION & OBJECTS SETUP ---
-
 window.addEventListener('load', () => {
+    // --- ENGINE SETUP ---
     const canvas = document.getElementById('gameCanvas');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -111,7 +109,7 @@ window.addEventListener('load', () => {
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-    // Lights Setup
+    // Lights
     const ambientLight = new THREE.HemisphereLight(0xffffff, 0x444455, 1.2);
     scene.add(ambientLight);
 
@@ -129,34 +127,29 @@ window.addEventListener('load', () => {
     sun.shadow.camera.bottom = -shadowSize;
     scene.add(sun);
 
-    // Array Collections for Collision & AI
+    // Collections
     const colliders = [];
     const vehicles = [];
-    const npcs = [];
-    const pickups = [];
+    const bullets = [];
 
-    // --- WORLD ENVIRONMENT CREATION ---
-    // Ground
-    const groundGeo = new THREE.PlaneGeometry(600, 600);
-    const groundMat = new THREE.MeshLambertMaterial({ color: 0x557a46 });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
+    // --- WORLD ENVIRONMENT ---
+    const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(600, 600),
+        new THREE.MeshLambertMaterial({ color: 0x557a46 })
+    );
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // Road Grid System
+    // Roads
     const roadMat = new THREE.MeshLambertMaterial({ color: 0x22252a });
-    const roadLineMat = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
-
     for (let r = -200; r <= 200; r += 80) {
-        // Horizontal Roads
         const hRoad = new THREE.Mesh(new THREE.PlaneGeometry(600, 16), roadMat);
         hRoad.rotation.x = -Math.PI / 2;
         hRoad.position.set(0, 0.02, r);
         hRoad.receiveShadow = true;
         scene.add(hRoad);
 
-        // Vertical Roads
         const vRoad = new THREE.Mesh(new THREE.PlaneGeometry(16, 600), roadMat);
         vRoad.rotation.x = -Math.PI / 2;
         vRoad.position.set(r, 0.02, 0);
@@ -164,27 +157,25 @@ window.addEventListener('load', () => {
         scene.add(vRoad);
     }
 
-    // City Buildings Generator
+    // Buildings
     const buildingMat = new THREE.MeshLambertMaterial({ color: 0x7f8c8d });
     const windowMat = new THREE.MeshBasicMaterial({ color: 0xf1c40f });
 
     for (let x = -220; x <= 220; x += 80) {
         for (let z = -220; z <= 220; z += 80) {
-            if (Math.abs(x) < 30 && Math.abs(z) < 30) continue; // Keep Spawn Clear
+            if (Math.abs(x) < 30 && Math.abs(z) < 30) continue;
 
             const bWidth = 32 + Math.random() * 10;
             const bDepth = 32 + Math.random() * 10;
             const bHeight = 25 + Math.random() * 45;
 
-            const bGeo = new THREE.BoxGeometry(bWidth, bHeight, bDepth);
-            const building = new THREE.Mesh(bGeo, buildingMat);
+            const building = new THREE.Mesh(new THREE.BoxGeometry(bWidth, bHeight, bDepth), buildingMat);
             building.position.set(x + 25, bHeight / 2, z + 25);
             building.castShadow = true;
             building.receiveShadow = true;
             scene.add(building);
             colliders.push(building);
 
-            // Add Decorative Windows
             for (let w = 2; w < bHeight - 4; w += 6) {
                 const win = new THREE.Mesh(new THREE.PlaneGeometry(bWidth - 4, 1.5), windowMat);
                 win.position.set(x + 25, w, z + 25 + bDepth / 2 + 0.1);
@@ -193,30 +184,30 @@ window.addEventListener('load', () => {
         }
     }
 
-    // Water Zone & Ocean Bridge
-    const waterGeo = new THREE.PlaneGeometry(300, 180);
-    const waterMat = new THREE.MeshLambertMaterial({ color: 0x2980b9, transparent: true, opacity: 0.85 });
-    const water = new THREE.Mesh(waterGeo, waterMat);
+    // Water & Bridge
+    const water = new THREE.Mesh(
+        new THREE.PlaneGeometry(300, 180),
+        new THREE.MeshLambertMaterial({ color: 0x2980b9, transparent: true, opacity: 0.85 })
+    );
     water.rotation.x = -Math.PI / 2;
     water.position.set(0, -0.2, 230);
     scene.add(water);
 
-    const bridge = new THREE.Mesh(new THREE.BoxGeometry(20, 2, 180), new THREE.MeshLambertMaterial({ color: 0x555555 }));
+    const bridge = new THREE.Mesh(
+        new THREE.BoxGeometry(20, 2, 180),
+        new THREE.MeshLambertMaterial({ color: 0x555555 })
+    );
     bridge.position.set(0, 0.8, 230);
     bridge.castShadow = true;
     bridge.receiveShadow = true;
     scene.add(bridge);
 
-    // --- HOUSE & INTERIOR SYSTEM ---
+    // House Interior
     const houseGroup = new THREE.Group();
-    const houseWallMat = new THREE.MeshLambertMaterial({ color: 0xdfe6e9 });
-
-    // Exterior Box
-    const hOuter = new THREE.Mesh(new THREE.BoxGeometry(18, 8, 14), houseWallMat);
+    const hOuter = new THREE.Mesh(new THREE.BoxGeometry(18, 8, 14), new THREE.MeshLambertMaterial({ color: 0xdfe6e9 }));
     hOuter.position.set(0, 4, 0);
     houseGroup.add(hOuter);
 
-    // Interior Room Base & Roof
     const hFloor = new THREE.Mesh(new THREE.BoxGeometry(17, 0.2, 13), new THREE.MeshLambertMaterial({ color: 0xe67e22 }));
     hFloor.position.set(0, 0.1, 0);
     houseGroup.add(hFloor);
@@ -224,7 +215,7 @@ window.addEventListener('load', () => {
     houseGroup.position.set(100, 0, -100);
     scene.add(houseGroup);
 
-    // --- VEHICLE FACTORY BUILDER ---
+    // Vehicles Builder
     function buildCar(x, z, color, type = 'car') {
         const vGroup = new THREE.Group();
         let bodyGeo, topGeo;
@@ -256,12 +247,11 @@ window.addEventListener('load', () => {
         return vGroup;
     }
 
-    // Spawn Vehicles
-    const car1 = buildCar(10, 20, 0xe74c3c, 'car');
-    const bike1 = buildCar(-15, 20, 0x2ecc71, 'bike');
-    const boat1 = buildCar(0, 230, 0xf39c12, 'boat');
+    buildCar(10, 20, 0xe74c3c, 'car');
+    buildCar(-15, 20, 0x2ecc71, 'bike');
+    buildCar(0, 230, 0xf39c12, 'boat');
 
-    // Helicopter Base & Model
+    // Helicopter
     const heliGroup = new THREE.Group();
     const hBody = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.0, 6.0), new THREE.MeshLambertMaterial({ color: 0x2c3e50 }));
     hBody.position.y = 1.0;
@@ -271,47 +261,28 @@ window.addEventListener('load', () => {
     hRotor.position.set(0, 2.2, 0);
     heliGroup.add(hRotor);
     heliGroup.userData = { rotor: hRotor };
-
     heliGroup.position.set(0, 30, 0);
     scene.add(heliGroup);
 
-    // Export variables to window for Part 3 access
-    window.gameEngine = {
-        scene, camera, renderer, sun,
-        colliders, vehicles, npcs, pickups,
-        houseGroup, heliGroup, water
-    };
-// --- PART 3: PLAYER, TOUCH CONTROLS, CAMERA & PHYSICS LOGIC ---
-
-    const { scene, camera, renderer, colliders, vehicles, npcs, pickups, houseGroup, heliGroup, water } = window.gameEngine;
-
-    // --- PLAYER CREATION ---
+    // --- PLAYER SETUP ---
     const playerGroup = new THREE.Group();
-
-    // Body
-    const pBodyMat = new THREE.MeshLambertMaterial({ color: 0x2980b9 });
-    const pBody = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.8, 0.6), pBodyMat);
+    const pBody = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.8, 0.6), new THREE.MeshLambertMaterial({ color: 0x2980b9 }));
     pBody.position.y = 0.9;
     pBody.castShadow = true;
     playerGroup.add(pBody);
 
-    // Head
-    const pHeadMat = new THREE.MeshLambertMaterial({ color: 0xffdbac });
-    const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), pHeadMat);
+    const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), new THREE.MeshLambertMaterial({ color: 0xffdbac }));
     pHead.position.y = 2.0;
     pHead.castShadow = true;
     playerGroup.add(pHead);
 
-    // Gun Model Attachment
-    const gunMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-    const pGun = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.8), gunMat);
+    const pGun = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.8), new THREE.MeshLambertMaterial({ color: 0x111111 }));
     pGun.position.set(0.6, 1.3, -0.4);
     playerGroup.add(pGun);
 
     playerGroup.position.set(0, 0, 8);
     scene.add(playerGroup);
 
-    // Player State Management
     const playerState = {
         health: 100,
         armor: 50,
@@ -323,7 +294,7 @@ window.addEventListener('load', () => {
         activeWeapon: 'PISTOL'
     };
 
-    // --- ON-SCREEN TOUCH JOYSTICK LOGIC ---
+    // --- TOUCH JOYSTICK LOGIC ---
     const joyContainer = document.getElementById('joystickContainer');
     const joyKnob = document.getElementById('joystickKnob');
     let joyTouchId = null;
@@ -378,7 +349,7 @@ window.addEventListener('load', () => {
         moveInput.y = dy / maxRadius;
     }
 
-    // --- CAMERA TOUCH LOOK CONTROLS ---
+    // --- CAMERA TOUCH CONTROLS ---
     const cameraZone = document.getElementById('cameraTouchZone');
     let camTouchId = null;
     let lastCamX = 0, lastCamY = 0;
@@ -415,13 +386,15 @@ window.addEventListener('load', () => {
         }
     });
 
-    // --- VEHICLE DRIVING CONTROLS INPUT ---
+    // --- DRIVING CONTROLS INPUT ---
     const driveInput = { gas: false, brake: false, left: false, right: false };
 
     function bindDriveBtn(elementId, inputKey) {
         const btn = document.getElementById(elementId);
         btn.addEventListener('touchstart', (e) => { e.preventDefault(); driveInput[inputKey] = true; });
         btn.addEventListener('touchend', (e) => { e.preventDefault(); driveInput[inputKey] = false; });
+        btn.addEventListener('mousedown', () => { driveInput[inputKey] = true; });
+        btn.addEventListener('mouseup', () => { driveInput[inputKey] = false; });
     }
 
     bindDriveBtn('btnGas', 'gas');
@@ -429,37 +402,19 @@ window.addEventListener('load', () => {
     bindDriveBtn('btnSteerLeft', 'left');
     bindDriveBtn('btnSteerRight', 'right');
 
-    // Export Part 3 Objects to Global Scope
-    window.gameEngine.playerGroup = playerGroup;
-    window.gameEngine.playerState = playerState;
-    window.gameEngine.moveInput = moveInput;
-    window.gameEngine.driveInput = driveInput;
-    window.gameEngine.getCameraAngles = () => ({ yaw: cameraYaw, pitch: cameraPitch });
-
-// --- PART 4: GAMEPLAY LOOPS, ACTIONS & EVENT LISTENERS ---
-
-    const { 
-        playerGroup, playerState, moveInput, driveInput, getCameraAngles 
-    } = window.gameEngine;
-
-    // --- BUTTON EVENT LISTENERS ---
-    
-    // 1. Enter / Exit Vehicle Action
+    // --- BUTTON ACTIONS ---
     const btnEnter = document.getElementById('btnEnter');
     const driveSteerPanel = document.getElementById('driveSteerPanel');
     const driveAccelPanel = document.getElementById('driveAccelPanel');
-    const joyContainerEl = document.getElementById('joystickContainer');
 
-    btnEnter.addEventListener('click', () => {
+    function toggleVehicle() {
         if (!playerState.inVehicle) {
-            // Check Near Any Vehicle
             for (let v of vehicles) {
                 if (playerGroup.position.distanceTo(v.position) < 5) {
                     playerState.inVehicle = v;
                     playerGroup.visible = false;
-                    
                     btnEnter.innerHTML = '🚶<br>EXIT';
-                    joyContainerEl.style.display = 'none';
+                    joyContainer.style.display = 'none';
                     driveSteerPanel.style.display = 'flex';
                     driveAccelPanel.style.display = 'flex';
                     showNotification("Vehicle Entered!");
@@ -467,24 +422,23 @@ window.addEventListener('load', () => {
                 }
             }
         } else {
-            // Exit Vehicle
             const v = playerState.inVehicle;
             playerGroup.position.copy(v.position);
             playerGroup.position.x += 2.5;
             playerGroup.visible = true;
-            
             playerState.inVehicle = null;
             btnEnter.innerHTML = '🚗<br>ENTER';
-            joyContainerEl.style.display = 'flex';
+            joyContainer.style.display = 'flex';
             driveSteerPanel.style.display = 'none';
             driveAccelPanel.style.display = 'none';
             showNotification("Exited Vehicle");
         }
-    });
+    }
 
-    // 2. Fire Gun Action
-    const btnFire = document.getElementById('btnFire');
-    btnFire.addEventListener('click', () => {
+    btnEnter.addEventListener('touchstart', (e) => { e.preventDefault(); toggleVehicle(); });
+    btnEnter.addEventListener('click', toggleVehicle);
+
+    function fireWeapon() {
         if (playerState.ammo <= 0) {
             showNotification("Out of Ammo!");
             return;
@@ -493,30 +447,30 @@ window.addEventListener('load', () => {
         playerState.ammo--;
         updateHUD();
 
-        // Create Bullet Projectile
-        const bulletGeo = new THREE.SphereGeometry(0.15, 8, 8);
-        const bulletMat = new THREE.MeshBasicMaterial({ color: 0xfff100 });
-        const bullet = new THREE.Mesh(bulletGeo, bulletMat);
+        const bullet = new THREE.Mesh(
+            new THREE.SphereGeometry(0.15, 8, 8),
+            new THREE.MeshBasicMaterial({ color: 0xfff100 })
+        );
 
         const spawnPos = playerGroup.position.clone();
         spawnPos.y += 1.4;
         bullet.position.copy(spawnPos);
 
-        const { yaw } = getCameraAngles();
         bullet.userData = {
-            dir: new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw)).normalize(),
+            dir: new THREE.Vector3(-Math.sin(cameraYaw), 0, -Math.cos(cameraYaw)).normalize(),
             life: 60
         };
 
         scene.add(bullet);
         bullets.push(bullet);
-    });
+    }
 
-    const bullets = [];
+    const btnFire = document.getElementById('btnFire');
+    btnFire.addEventListener('touchstart', (e) => { e.preventDefault(); fireWeapon(); });
+    btnFire.addEventListener('click', fireWeapon);
 
-    // 3. House & Interior Interaction (E Button)
     const btnInteract = document.getElementById('btnInteract');
-    btnInteract.addEventListener('click', () => {
+    function interactHouse() {
         const housePos = new THREE.Vector3(100, 0, -100);
         if (playerGroup.position.distanceTo(housePos) < 12) {
             playerState.insideHouse = !playerState.insideHouse;
@@ -532,121 +486,12 @@ window.addEventListener('load', () => {
         } else {
             showNotification("No interactable object nearby!");
         }
-    });
+    }
+    btnInteract.addEventListener('touchstart', (e) => { e.preventDefault(); interactHouse(); });
+    btnInteract.addEventListener('click', interactHouse);
 
-    // 4. Weapon Switcher Button
     const btnWeapon = document.getElementById('btnWeapon');
-    btnWeapon.addEventListener('click', () => {
+    function switchWeapon() {
         if (playerState.activeWeapon === 'PISTOL') {
             playerState.activeWeapon = 'RIFLE';
-            btnWeapon.innerHTML = '🔫<br>RIFLE';
-            showNotification("Switched to Rifle");
-        } else {
-            playerState.activeWeapon = 'PISTOL';
-            btnWeapon.innerHTML = '🔄<br>GUN';
-            showNotification("Switched to Pistol");
-        }
-    });
-
-    // --- UI NOTIFICATION HELPER ---
-    function showNotification(msg) {
-        const el = document.getElementById('notification');
-        el.textContent = msg;
-        el.style.opacity = '1';
-        setTimeout(() => { el.style.opacity = '0'; }, 2000);
-    }
-
-    function updateHUD() {
-        document.getElementById('uiHealth').textContent = `❤️ HEALTH: ${playerState.health}`;
-        document.getElementById('uiArmor').textContent = `🛡️ ARMOR: ${playerState.armor}`;
-        document.getElementById('uiAmmo').textContent = `🔫 AMMO: ${playerState.ammo}`;
-        document.getElementById('uiMoney').textContent = `💵 $${playerState.money}`;
-        document.getElementById('uiWanted').textContent = `🚨 ${'★'.repeat(playerState.wanted)}${'☆'.repeat(5 - playerState.wanted)}`;
-    }
-
-    // --- MAIN ENGINE ANIMATION LOOP ---
-    function animate() {
-        requestAnimationFrame(animate);
-
-        const { yaw, pitch } = getCameraAngles();
-
-        // A. Player Walking Physics
-        if (!playerState.inVehicle) {
-            if (Math.abs(moveInput.x) > 0.1 || Math.abs(moveInput.y) > 0.1) {
-                const moveAngle = yaw + Math.atan2(-moveInput.x, -moveInput.y);
-                const walkSpeed = 0.22;
-
-                playerGroup.position.x -= Math.sin(moveAngle) * walkSpeed;
-                playerGroup.position.z -= Math.cos(moveAngle) * walkSpeed;
-                playerGroup.rotation.y = moveAngle + Math.PI;
-            }
-        } 
-        // B. Vehicle Driving Physics
-        else {
-            const v = playerState.inVehicle;
-            const vData = v.userData;
-
-            if (driveInput.gas) {
-                vData.speed = Math.min(1.4, vData.speed + 0.025);
-            } else if (driveInput.brake) {
-                vData.speed = Math.max(-0.5, vData.speed - 0.025);
-            } else {
-                vData.speed *= 0.96; // Natural Friction
-            }
-
-            if (Math.abs(vData.speed) > 0.05) {
-                const turnSpeed = (vData.speed > 0 ? 1 : -1) * 0.035;
-                if (driveInput.left) v.rotation.y += turnSpeed;
-                if (driveInput.right) v.rotation.y -= turnSpeed;
-            }
-
-            v.position.x -= Math.sin(v.rotation.y) * vData.speed;
-            v.position.z -= Math.cos(v.rotation.y) * vData.speed;
-            
-            // Sync Player Group with Vehicle Position
-            playerGroup.position.copy(v.position);
-        }
-
-        // C. Bullet Physics & Life
-        for (let i = bullets.length - 1; i >= 0; i--) {
-            const b = bullets[i];
-            b.position.addScaledVector(b.userData.dir, 1.2);
-            b.userData.life--;
-
-            if (b.userData.life <= 0) {
-                scene.remove(b);
-                bullets.splice(i, 1);
-            }
-        }
-
-        // D. Helicopter Blades Animation & Patrol
-        if (heliGroup.userData.rotor) {
-            heliGroup.userData.rotor.rotation.y += 0.4;
-        }
-
-        // E. Dynamic Camera Target System
-        const targetObj = playerState.inVehicle ? playerState.inVehicle : playerGroup;
-        const camDistance = playerState.inVehicle ? 16 : 9;
-
-        camera.position.x = targetObj.position.x + Math.sin(yaw) * Math.cos(pitch) * camDistance;
-        camera.position.y = targetObj.position.y + Math.sin(pitch) * camDistance + 2.2;
-        camera.position.z = targetObj.position.z + Math.cos(yaw) * Math.cos(pitch) * camDistance;
-
-        camera.lookAt(targetObj.position.x, targetObj.position.y + 1.2, targetObj.position.z);
-
-        renderer.render(scene, camera);
-    }
-
-    // Start Rendering Loop
-    animate();
-
-    // Window Resize Handling
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-});
-</script>
-</body>
-</html>
+            btnWeapon.i
