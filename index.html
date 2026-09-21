@@ -1291,7 +1291,14 @@ document.addEventListener('keydown', function(e){
  const oldRAF=window.requestAnimationFrame; // marker for diagnostics only
  const ticker=setInterval(()=>{const dt=.05;for(const f of window.__finalTickers||[])f(dt)},50);
  window.__finalBuild={open,recallRed,recallBike,owned,version:'FINAL'};
-})();
+})();function animate() {
+    requestAnimationFrame(animate);
+    if (typeof renderer !== 'undefined' && typeof scene !== 'undefined' && typeof camera !== 'undefined') {
+        renderer.render(scene, camera);
+    }
+}
+animate();
+  
 </script>
 
 </body>
