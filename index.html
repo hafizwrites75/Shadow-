@@ -7,14 +7,21 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
         body { background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; direction: rtl; }
+        
+        /* پاس کوڈ اسکرین */
         #login-screen { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 380px; }
-        #passcode-input { width: 100%; padding: 12px; font-size: 18px; text-align: center; border: 2px solid #ddd; border-radius: 8px; margin: 15px 0; outline: none; }
+        #passcode-input { width: 100%; padding: 12px; font-size: 18px; text-align: center; border: 2px solid #ddd; border-radius: 8px; margin: 15px 0; outline: none; letter-spacing: 2px; }
+        #passcode-input:focus { border-color: #007bff; }
         .btn { background: #007bff; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; width: 100%; }
+        
+        /* مین گیلری اسکرین */
         #main-content { display: none; width: 100%; max-width: 1000px; padding: 15px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 10px; }
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; }
         .folder-card { background: #fff; padding: 25px 15px; border-radius: 10px; text-align: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .folder-icon { font-size: 40px; margin-bottom: 8px; }
+        
+        /* فوٹو ویو */
         #gallery-view { display: none; }
         .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
         .photo-grid img { width: 100%; height: 110px; object-fit: cover; border-radius: 6px; }
@@ -24,16 +31,16 @@
 
     <!-- پاس کوڈ اسکرین -->
     <div id="login-screen">
-        <h3>🔒 پاس کوڈ درج کریں</h3>
-        <input type="password" id="passcode-input" placeholder="پاس ورڈ">
-        <button class="btn" onclick="checkCode()">کھولیں</button>
-        <p id="error-msg" style="color:red; display:none; margin-top:10px; font-size:14px;">غلط پاس ورڈ!</p>
+        <h3>🔒 سیریز پاس کوڈ لکھیں</h3>
+        <input type="password" id="passcode-input" placeholder="پاس کوڈ درج کریں">
+        <button class="btn" onclick="checkCode()">گئلری کھولیں</button>
+        <p id="error-msg" style="color:red; display:none; margin-top:10px; font-size:14px;">غلط پاس کوڈ! دوبارہ کوشش کریں۔</p>
     </div>
 
     <!-- مرکزی گیلری اسکرین -->
     <div id="main-content">
         <div class="header">
-            <h2>میری گیلری</h2>
+            <h2>میری پرائیویٹ گیلری</h2>
             <button class="btn" style="width:auto; background:#dc3545;" onclick="logout()">لاک کریں</button>
         </div>
 
@@ -42,53 +49,68 @@
             <div class="folder-card" onclick="openFolder('family')"><div class="folder-icon">📁</div><b>Family</b></div>
             <div class="folder-card" onclick="openFolder('friends')"><div class="folder-icon">📁</div><b>Friends</b></div>
             <div class="folder-card" onclick="openFolder('files')"><div class="folder-icon">📁</div><b>Files</b></div>
+            <div class="folder-card" onclick="openFolder('personal')"><div class="folder-icon">📁</div><b>Personal</b></div>
+            <div class="folder-card" onclick="openFolder('travel')"><div class="folder-icon">📁</div><b>Travel</b></div>
         </div>
 
         <!-- فوٹو گیلری -->
         <div id="gallery-view">
-            <button class="btn" style="width:auto; background:#6c757d; margin-bottom:15px;" onclick="closeFolder()">← واپس جائیں</button>
+            <button class="btn" style="width:auto; background:#6c757d; margin-bottom:15px;" onclick="closeFolder()">← واپس فولڈرز پر جائیں</button>
             <h3 id="folder-title" style="margin-bottom:15px;"></h3>
             <div id="photo-container" class="photo-grid"></div>
         </div>
     </div>
 
     <script>
-        // 👉 اپنا پاس ورڈ یہاں بدلیں
-        const SECRET_CODE = "1234";
+        // 👉 آپ کا مانگا ہوا مخصوص پاس کوڈ
+        const SECRET_CODE = "109029";
 
+        // پاس کوڈ چیک کرنے کا فنکشن
         function checkCode() {
-            if (document.getElementById("passcode-input").value === SECRET_CODE) {
+            const inputVal = document.getElementById("passcode-input").value;
+            if (inputVal === SECRET_CODE) {
                 document.getElementById("login-screen").style.display = "none";
                 document.getElementById("main-content").style.display = "block";
+                document.getElementById("error-msg").style.display = "none";
+                document.getElementById("passcode-input").value = "";
             } else {
                 document.getElementById("error-msg").style.display = "block";
             }
         }
 
+        // انٹَر (Enter) کی دبانے سے لاگ ان
+        document.getElementById("passcode-input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                checkCode();
+            }
+        });
+
+        // فولڈر کھولنے کا فنکشن
         function openFolder(folderName) {
             document.getElementById("folders-list").style.display = "none";
             document.getElementById("gallery-view").style.display = "block";
-            document.getElementById("folder-title").innerText = folderName.toUpperCase();
+            document.getElementById("folder-title").innerText = folderName.toUpperCase() + " کی تصاویر";
 
             const container = document.getElementById("photo-container");
             container.innerHTML = "";
 
             // خودکار طریقے سے تصاویر دکھانے کا لاجک
-            // یہ فولڈر کے اندر کی تمام تصاویر کو لوڈ کر دے گا
-            for (let i = 1; i <= 200; i++) {
+            for (let i = 1; i <= 500; i++) {
                 const img = document.createElement("img");
                 img.src = folderName + "/pic" + i + ".jpg"; 
-                // اگر فوٹو نہ ملے تو خود ہی غائب ہو جائے گی
+                // اگر تصویر نہ ہو تو خود غائب ہو جائے گی
                 img.onerror = function() { this.style.display = 'none'; };
                 container.appendChild(img);
             }
         }
 
+        // فولڈر بند کرنا
         function closeFolder() {
             document.getElementById("gallery-view").style.display = "none";
             document.getElementById("folders-list").style.display = "grid";
         }
 
+        // دوبارہ ویب سائٹ لاک کرنا
         function logout() {
             closeFolder();
             document.getElementById("main-content").style.display = "none";
