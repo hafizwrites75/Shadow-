@@ -1,497 +1,99 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ur">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Open City GTA Style — Full Mobile Edition</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-  #gameCanvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
-
-  /* Top Overlay HUD */
-  .hud-panel { position: fixed; z-index: 10; pointer-events: none; display: flex; flex-direction: column; gap: 6px; }
-  .hud-top-left { top: 12px; left: 12px; }
-  .hud-top-right { top: 12px; right: 12px; align-items: flex-end; }
-  
-  .hud-box { background: rgba(15, 15, 20, 0.75); border: 1px solid rgba(255, 255, 255, 0.15); padding: 6px 14px; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.8); backdrop-filter: blur(4px); }
-  .hud-health { color: #ff4757; }
-  .hud-armor { color: #1e90ff; }
-  .hud-money { color: #2ed573; font-size: 15px; }
-  .hud-wanted { color: #ffa502; letter-spacing: 2px; }
-  .hud-ammo { color: #eccc68; }
-
-  /* Notification Toast */
-  #notification { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #333; pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 20; text-align: center; }
-
-  /* Touch Camera Layer */
-  #cameraTouchZone { position: fixed; top: 0; right: 0; width: 65vw; height: 100vh; z-index: 2; touch-action: none; }
-
-  /* On-Screen Joystick Container */
-  #joystickContainer { position: fixed; left: 25px; bottom: 25px; width: 110px; height: 110px; border-radius: 50%; background: rgba(255, 255, 255, 0.12); border: 2px solid rgba(255, 255, 255, 0.3); z-index: 10; touch-action: none; display: flex; justify-content: center; align-items: center; }
-  #joystickKnob { width: 48px; height: 48px; border-radius: 50%; background: rgba(255, 255, 255, 0.75); box-shadow: 0 0 10px rgba(0,0,0,0.5); pointer-events: none; }
-
-  /* Action Buttons Grid */
-  .action-btn { position: fixed; z-index: 10; border: none; border-radius: 50%; color: #fff; font-weight: bold; display: flex; justify-content: center; align-items: center; touch-action: none; box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
-  .action-btn:active { transform: scale(0.9); }
-
-  #btnFire { right: 95px; bottom: 25px; width: 62px; height: 62px; background: radial-gradient(circle, #ff4757, #ff6b81); font-size: 13px; }
-  #btnEnter { right: 20px; bottom: 25px; width: 62px; height: 62px; background: radial-gradient(circle, #2ed573, #7bed9f); font-size: 11px; text-align: center; line-height: 1.1; }
-  #btnInteract { right: 25px; bottom: 100px; width: 52px; height: 52px; background: radial-gradient(circle, #70a1ff, #1e90ff); font-size: 16px; }
-  #btnWeapon { right: 95px; bottom: 100px; width: 52px; height: 52px; background: radial-gradient(circle, #ffa502, #ff7f50); font-size: 12px; }
-
-  /* Driving UI Controls */
-  .drive-panel { position: fixed; bottom: 25px; display: none; z-index: 10; }
-  #driveSteerPanel { left: 20px; gap: 12px; }
-  #driveAccelPanel { right: 20px; flex-direction: column; gap: 12px; }
-  
-  .drive-btn { width: 60px; height: 60px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.6); background: rgba(20, 20, 30, 0.8); color: #fff; font-size: 22px; font-weight: bold; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.7); }
-  .drive-btn:active { background: rgba(255,255,255,0.3); }
-
-  /* Screen Center Crosshair */
-  #crosshair { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; border: 2px solid rgba(255,255,255,0.7); border-radius: 50%; pointer-events: none; z-index: 5; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پرائیویٹ گیلری</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; direction: rtl; }
+        #login-screen { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 380px; }
+        #passcode-input { width: 100%; padding: 12px; font-size: 18px; text-align: center; border: 2px solid #ddd; border-radius: 8px; margin: 15px 0; outline: none; }
+        .btn { background: #007bff; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; width: 100%; }
+        #main-content { display: none; width: 100%; max-width: 1000px; padding: 15px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 10px; }
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
+        .folder-card { background: #fff; padding: 25px 15px; border-radius: 10px; text-align: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .folder-icon { font-size: 40px; margin-bottom: 8px; }
+        #gallery-view { display: none; }
+        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+        .photo-grid img { width: 100%; height: 110px; object-fit: cover; border-radius: 6px; }
+    </style>
 </head>
 <body>
 
-<canvas id="gameCanvas"></canvas>
-<div id="crosshair"></div>
-<div id="notification">Welcome to Open City!</div>
-
-<!-- Top Status HUD -->
-<div class="hud-panel hud-top-left">
-  <div class="hud-box hud-health" id="uiHealth">❤️ HEALTH: 100</div>
-  <div class="hud-box hud-armor" id="uiArmor">🛡️ ARMOR: 50</div>
-  <div class="hud-box hud-ammo" id="uiAmmo">🔫 AMMO: 30 / 120</div>
-</div>
-
-<div class="hud-panel hud-top-right">
-  <div class="hud-box hud-money" id="uiMoney">💵 $2,500</div>
-  <div class="hud-box hud-wanted" id="uiWanted">🚨 ☆☆☆☆☆</div>
-</div>
-
-<!-- Touch Input Zones -->
-<div id="cameraTouchZone"></div>
-<div id="joystickContainer"><div id="joystickKnob"></div></div>
-
-<!-- Mobile Buttons -->
-<button class="action-btn" id="btnFire">🔥<br>FIRE</button>
-<button class="action-btn" id="btnEnter">🚗<br>ENTER</button>
-<button class="action-btn" id="btnInteract">E</button>
-<button class="action-btn" id="btnWeapon">🔄<br>GUN</button>
-
-<!-- Vehicle Dynamic Controls -->
-<div id="driveSteerPanel" class="drive-panel">
-  <button class="drive-btn" id="btnSteerLeft">◀</button>
-  <button class="drive-btn" id="btnSteerRight">▶</button>
-</div>
-<div id="driveAccelPanel" class="drive-panel">
-  <button class="drive-btn" id="btnGas">▲</button>
-  <button class="drive-btn" id="btnBrake">▼</button>
-</div>
-
-<!-- Import Three.js Engine -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-<script>
-window.addEventListener('load', () => {
-    // --- ENGINE SETUP ---
-    const canvas = document.getElementById('gameCanvas');
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x73a8d4);
-    scene.fog = new THREE.FogExp2(0x73a8d4, 0.008);
-
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-    // Lights
-    const ambientLight = new THREE.HemisphereLight(0xffffff, 0x444455, 1.2);
-    scene.add(ambientLight);
-
-    const sun = new THREE.DirectionalLight(0xffffff, 1.5);
-    sun.position.set(100, 150, 50);
-    sun.castShadow = true;
-    sun.shadow.mapSize.width = 1024;
-    sun.shadow.mapSize.height = 1024;
-    sun.shadow.camera.near = 10;
-    sun.shadow.camera.far = 300;
-    const shadowSize = 100;
-    sun.shadow.camera.left = -shadowSize;
-    sun.shadow.camera.right = shadowSize;
-    sun.shadow.camera.top = shadowSize;
-    sun.shadow.camera.bottom = -shadowSize;
-    scene.add(sun);
-
-    // Collections
-    const colliders = [];
-    const vehicles = [];
-    const bullets = [];
-
-    // --- WORLD ENVIRONMENT ---
-    const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(600, 600),
-        new THREE.MeshLambertMaterial({ color: 0x557a46 })
-    );
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    // Roads
-    const roadMat = new THREE.MeshLambertMaterial({ color: 0x22252a });
-    for (let r = -200; r <= 200; r += 80) {
-        const hRoad = new THREE.Mesh(new THREE.PlaneGeometry(600, 16), roadMat);
-        hRoad.rotation.x = -Math.PI / 2;
-        hRoad.position.set(0, 0.02, r);
-        hRoad.receiveShadow = true;
-        scene.add(hRoad);
-
-        const vRoad = new THREE.Mesh(new THREE.PlaneGeometry(16, 600), roadMat);
-        vRoad.rotation.x = -Math.PI / 2;
-        vRoad.position.set(r, 0.02, 0);
-        vRoad.receiveShadow = true;
-        scene.add(vRoad);
-    }
-
-    // Buildings
-    const buildingMat = new THREE.MeshLambertMaterial({ color: 0x7f8c8d });
-    const windowMat = new THREE.MeshBasicMaterial({ color: 0xf1c40f });
-
-    for (let x = -220; x <= 220; x += 80) {
-        for (let z = -220; z <= 220; z += 80) {
-            if (Math.abs(x) < 30 && Math.abs(z) < 30) continue;
-
-            const bWidth = 32 + Math.random() * 10;
-            const bDepth = 32 + Math.random() * 10;
-            const bHeight = 25 + Math.random() * 45;
-
-            const building = new THREE.Mesh(new THREE.BoxGeometry(bWidth, bHeight, bDepth), buildingMat);
-            building.position.set(x + 25, bHeight / 2, z + 25);
-            building.castShadow = true;
-            building.receiveShadow = true;
-            scene.add(building);
-            colliders.push(building);
-
-            for (let w = 2; w < bHeight - 4; w += 6) {
-                const win = new THREE.Mesh(new THREE.PlaneGeometry(bWidth - 4, 1.5), windowMat);
-                win.position.set(x + 25, w, z + 25 + bDepth / 2 + 0.1);
-                scene.add(win);
-            }
-        }
-    }
-
-    // Water & Bridge
-    const water = new THREE.Mesh(
-        new THREE.PlaneGeometry(300, 180),
-        new THREE.MeshLambertMaterial({ color: 0x2980b9, transparent: true, opacity: 0.85 })
-    );
-    water.rotation.x = -Math.PI / 2;
-    water.position.set(0, -0.2, 230);
-    scene.add(water);
-
-    const bridge = new THREE.Mesh(
-        new THREE.BoxGeometry(20, 2, 180),
-        new THREE.MeshLambertMaterial({ color: 0x555555 })
-    );
-    bridge.position.set(0, 0.8, 230);
-    bridge.castShadow = true;
-    bridge.receiveShadow = true;
-    scene.add(bridge);
-
-    // House Interior
-    const houseGroup = new THREE.Group();
-    const hOuter = new THREE.Mesh(new THREE.BoxGeometry(18, 8, 14), new THREE.MeshLambertMaterial({ color: 0xdfe6e9 }));
-    hOuter.position.set(0, 4, 0);
-    houseGroup.add(hOuter);
-
-    const hFloor = new THREE.Mesh(new THREE.BoxGeometry(17, 0.2, 13), new THREE.MeshLambertMaterial({ color: 0xe67e22 }));
-    hFloor.position.set(0, 0.1, 0);
-    houseGroup.add(hFloor);
-
-    houseGroup.position.set(100, 0, -100);
-    scene.add(houseGroup);
-
-    // Vehicles Builder
-    function buildCar(x, z, color, type = 'car') {
-        const vGroup = new THREE.Group();
-        let bodyGeo, topGeo;
-
-        if (type === 'bike') {
-            bodyGeo = new THREE.BoxGeometry(0.8, 0.9, 2.2);
-            topGeo = new THREE.BoxGeometry(0.6, 0.5, 0.8);
-        } else if (type === 'boat') {
-            bodyGeo = new THREE.BoxGeometry(3.2, 1.0, 7.0);
-            topGeo = new THREE.BoxGeometry(2.2, 0.8, 2.5);
-        } else {
-            bodyGeo = new THREE.BoxGeometry(2.4, 1.1, 4.8);
-            topGeo = new THREE.BoxGeometry(2.0, 0.9, 2.4);
-        }
-
-        const body = new THREE.Mesh(bodyGeo, new THREE.MeshLambertMaterial({ color }));
-        body.position.y = type === 'boat' ? 0.3 : 0.6;
-        body.castShadow = true;
-        vGroup.add(body);
-
-        const top = new THREE.Mesh(topGeo, new THREE.MeshLambertMaterial({ color: 0x111111 }));
-        top.position.set(0, body.position.y + 0.8, -0.2);
-        vGroup.add(top);
-
-        vGroup.position.set(x, 0, z);
-        vGroup.userData = { type, speed: 0, health: 100 };
-        scene.add(vGroup);
-        vehicles.push(vGroup);
-        return vGroup;
-    }
-
-    buildCar(10, 20, 0xe74c3c, 'car');
-    buildCar(-15, 20, 0x2ecc71, 'bike');
-    buildCar(0, 230, 0xf39c12, 'boat');
-
-    // Helicopter
-    const heliGroup = new THREE.Group();
-    const hBody = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.0, 6.0), new THREE.MeshLambertMaterial({ color: 0x2c3e50 }));
-    hBody.position.y = 1.0;
-    heliGroup.add(hBody);
-
-    const hRotor = new THREE.Mesh(new THREE.BoxGeometry(8.0, 0.1, 0.4), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-    hRotor.position.set(0, 2.2, 0);
-    heliGroup.add(hRotor);
-    heliGroup.userData = { rotor: hRotor };
-    heliGroup.position.set(0, 30, 0);
-    scene.add(heliGroup);
-
-    // --- PLAYER SETUP ---
-    const playerGroup = new THREE.Group();
-    const pBody = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.8, 0.6), new THREE.MeshLambertMaterial({ color: 0x2980b9 }));
-    pBody.position.y = 0.9;
-    pBody.castShadow = true;
-    playerGroup.add(pBody);
-
-    const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), new THREE.MeshLambertMaterial({ color: 0xffdbac }));
-    pHead.position.y = 2.0;
-    pHead.castShadow = true;
-    playerGroup.add(pHead);
-
-    const pGun = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.8), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-    pGun.position.set(0.6, 1.3, -0.4);
-    playerGroup.add(pGun);
-
-    playerGroup.position.set(0, 0, 8);
-    scene.add(playerGroup);
-
-    const playerState = {
-        health: 100,
-        armor: 50,
-        ammo: 120,
-        money: 2500,
-        wanted: 1,
-        inVehicle: null,
-        insideHouse: false,
-        activeWeapon: 'PISTOL'
-    };
-
-    // --- TOUCH JOYSTICK LOGIC ---
-    const joyContainer = document.getElementById('joystickContainer');
-    const joyKnob = document.getElementById('joystickKnob');
-    let joyTouchId = null;
-    let moveInput = { x: 0, y: 0 };
-
-    joyContainer.addEventListener('touchstart', (e) => {
-        const touch = e.changedTouches[0];
-        joyTouchId = touch.identifier;
-        handleJoystickMove(touch);
-    }, { passive: false });
-
-    window.addEventListener('touchmove', (e) => {
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            if (e.changedTouches[i].identifier === joyTouchId) {
-                handleJoystickMove(e.changedTouches[i]);
-            }
-        }
-    }, { passive: false });
-
-    const resetJoystick = () => {
-        joyKnob.style.transform = `translate(0px, 0px)`;
-        moveInput.x = 0;
-        moveInput.y = 0;
-    };
-
-    window.addEventListener('touchend', (e) => {
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            if (e.changedTouches[i].identifier === joyTouchId) {
-                joyTouchId = null;
-                resetJoystick();
-            }
-        }
-    });
-
-    function handleJoystickMove(touch) {
-        const rect = joyContainer.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-
-        let dx = touch.clientX - centerX;
-        let dy = touch.clientY - centerY;
-        const maxRadius = 35;
-        const distance = Math.hypot(dx, dy);
-
-        if (distance > maxRadius) {
-            dx = (dx / distance) * maxRadius;
-            dy = (dy / distance) * maxRadius;
-        }
-
-        joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-        moveInput.x = dx / maxRadius;
-        moveInput.y = dy / maxRadius;
-    }
-
-    // --- CAMERA TOUCH CONTROLS ---
-    const cameraZone = document.getElementById('cameraTouchZone');
-    let camTouchId = null;
-    let lastCamX = 0, lastCamY = 0;
-    let cameraYaw = 0, cameraPitch = 0.25;
-
-    cameraZone.addEventListener('touchstart', (e) => {
-        const touch = e.changedTouches[0];
-        camTouchId = touch.identifier;
-        lastCamX = touch.clientX;
-        lastCamY = touch.clientY;
-    });
-
-    window.addEventListener('touchmove', (e) => {
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            if (e.changedTouches[i].identifier === camTouchId) {
-                const touch = e.changedTouches[i];
-                const deltaX = touch.clientX - lastCamX;
-                const deltaY = touch.clientY - lastCamY;
-
-                cameraYaw -= deltaX * 0.005;
-                cameraPitch = Math.max(-0.1, Math.min(0.6, cameraPitch + deltaY * 0.005));
-
-                lastCamX = touch.clientX;
-                lastCamY = touch.clientY;
-            }
-        }
-    });
-
-    window.addEventListener('touchend', (e) => {
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            if (e.changedTouches[i].identifier === camTouchId) {
-                camTouchId = null;
-            }
-        }
-    });
-
-    // --- DRIVING CONTROLS INPUT ---
-    const driveInput = { gas: false, brake: false, left: false, right: false };
-
-    function bindDriveBtn(elementId, inputKey) {
-        const btn = document.getElementById(elementId);
-        btn.addEventListener('touchstart', (e) => { e.preventDefault(); driveInput[inputKey] = true; });
-        btn.addEventListener('touchend', (e) => { e.preventDefault(); driveInput[inputKey] = false; });
-        btn.addEventListener('mousedown', () => { driveInput[inputKey] = true; });
-        btn.addEventListener('mouseup', () => { driveInput[inputKey] = false; });
-    }
-
-    bindDriveBtn('btnGas', 'gas');
-    bindDriveBtn('btnBrake', 'brake');
-    bindDriveBtn('btnSteerLeft', 'left');
-    bindDriveBtn('btnSteerRight', 'right');
-
-    // --- BUTTON ACTIONS ---
-    const btnEnter = document.getElementById('btnEnter');
-    const driveSteerPanel = document.getElementById('driveSteerPanel');
-    const driveAccelPanel = document.getElementById('driveAccelPanel');
-
-    function toggleVehicle() {
-        if (!playerState.inVehicle) {
-            for (let v of vehicles) {
-                if (playerGroup.position.distanceTo(v.position) < 5) {
-                    playerState.inVehicle = v;
-                    playerGroup.visible = false;
-                    btnEnter.innerHTML = '🚶<br>EXIT';
-                    joyContainer.style.display = 'none';
-                    driveSteerPanel.style.display = 'flex';
-                    driveAccelPanel.style.display = 'flex';
-                    showNotification("Vehicle Entered!");
-                    break;
-                }
-            }
-        } else {
-            const v = playerState.inVehicle;
-            playerGroup.position.copy(v.position);
-            playerGroup.position.x += 2.5;
-            playerGroup.visible = true;
-            playerState.inVehicle = null;
-            btnEnter.innerHTML = '🚗<br>ENTER';
-            joyContainer.style.display = 'flex';
-            driveSteerPanel.style.display = 'none';
-            driveAccelPanel.style.display = 'none';
-            showNotification("Exited Vehicle");
-        }
-    }
-
-    btnEnter.addEventListener('touchstart', (e) => { e.preventDefault(); toggleVehicle(); });
-    btnEnter.addEventListener('click', toggleVehicle);
-
-    function fireWeapon() {
-        if (playerState.ammo <= 0) {
-            showNotification("Out of Ammo!");
-            return;
-        }
-
-        playerState.ammo--;
-        updateHUD();
-
-        const bullet = new THREE.Mesh(
-            new THREE.SphereGeometry(0.15, 8, 8),
-            new THREE.MeshBasicMaterial({ color: 0xfff100 })
-        );
-
-        const spawnPos = playerGroup.position.clone();
-        spawnPos.y += 1.4;
-        bullet.position.copy(spawnPos);
-
-        bullet.userData = {
-            dir: new THREE.Vector3(-Math.sin(cameraYaw), 0, -Math.cos(cameraYaw)).normalize(),
-            life: 60
-        };
-
-        scene.add(bullet);
-        bullets.push(bullet);
-    }
-
-    const btnFire = document.getElementById('btnFire');
-    btnFire.addEventListener('touchstart', (e) => { e.preventDefault(); fireWeapon(); });
-    btnFire.addEventListener('click', fireWeapon);
-
-    const btnInteract = document.getElementById('btnInteract');
-    function interactHouse() {
-        const housePos = new THREE.Vector3(100, 0, -100);
-        if (playerGroup.position.distanceTo(housePos) < 12) {
-            playerState.insideHouse = !playerState.insideHouse;
-            houseGroup.visible = !playerState.insideHouse;
-
-            if (playerState.insideHouse) {
-                playerGroup.position.set(100, 1, -100);
-                showNotification("Entered House Safezone");
+    <!-- پاس کوڈ اسکرین -->
+    <div id="login-screen">
+        <h3>🔒 پاس کوڈ درج کریں</h3>
+        <input type="password" id="passcode-input" placeholder="پاس ورڈ">
+        <button class="btn" onclick="checkCode()">کھولیں</button>
+        <p id="error-msg" style="color:red; display:none; margin-top:10px; font-size:14px;">غلط پاس ورڈ!</p>
+    </div>
+
+    <!-- مرکزی گیلری اسکرین -->
+    <div id="main-content">
+        <div class="header">
+            <h2>میری گیلری</h2>
+            <button class="btn" style="width:auto; background:#dc3545;" onclick="logout()">لاک کریں</button>
+        </div>
+
+        <!-- فولڈرز -->
+        <div id="folders-list" class="folder-grid">
+            <div class="folder-card" onclick="openFolder('family')"><div class="folder-icon">📁</div><b>Family</b></div>
+            <div class="folder-card" onclick="openFolder('friends')"><div class="folder-icon">📁</div><b>Friends</b></div>
+            <div class="folder-card" onclick="openFolder('files')"><div class="folder-icon">📁</div><b>Files</b></div>
+        </div>
+
+        <!-- فوٹو گیلری -->
+        <div id="gallery-view">
+            <button class="btn" style="width:auto; background:#6c757d; margin-bottom:15px;" onclick="closeFolder()">← واپس جائیں</button>
+            <h3 id="folder-title" style="margin-bottom:15px;"></h3>
+            <div id="photo-container" class="photo-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        // 👉 اپنا پاس ورڈ یہاں بدلیں
+        const SECRET_CODE = "1234";
+
+        function checkCode() {
+            if (document.getElementById("passcode-input").value === SECRET_CODE) {
+                document.getElementById("login-screen").style.display = "none";
+                document.getElementById("main-content").style.display = "block";
             } else {
-                playerGroup.position.set(100, 0, -88);
-                showNotification("Exited House");
+                document.getElementById("error-msg").style.display = "block";
             }
-        } else {
-            showNotification("No interactable object nearby!");
         }
-    }
-    btnInteract.addEventListener('touchstart', (e) => { e.preventDefault(); interactHouse(); });
-    btnInteract.addEventListener('click', interactHouse);
 
-    const btnWeapon = document.getElementById('btnWeapon');
-    function switchWeapon() {
-        if (playerState.activeWeapon === 'PISTOL') {
-            playerState.activeWeapon = 'RIFLE';
-            btnWeapon.i
+        function openFolder(folderName) {
+            document.getElementById("folders-list").style.display = "none";
+            document.getElementById("gallery-view").style.display = "block";
+            document.getElementById("folder-title").innerText = folderName.toUpperCase();
+
+            const container = document.getElementById("photo-container");
+            container.innerHTML = "";
+
+            // خودکار طریقے سے تصاویر دکھانے کا لاجک
+            // یہ فولڈر کے اندر کی تمام تصاویر کو لوڈ کر دے گا
+            for (let i = 1; i <= 200; i++) {
+                const img = document.createElement("img");
+                img.src = folderName + "/pic" + i + ".jpg"; 
+                // اگر فوٹو نہ ملے تو خود ہی غائب ہو جائے گی
+                img.onerror = function() { this.style.display = 'none'; };
+                container.appendChild(img);
+            }
+        }
+
+        function closeFolder() {
+            document.getElementById("gallery-view").style.display = "none";
+            document.getElementById("folders-list").style.display = "grid";
+        }
+
+        function logout() {
+            closeFolder();
+            document.getElementById("main-content").style.display = "none";
+            document.getElementById("login-screen").style.display = "block";
+        }
+    </script>
+</body>
+</html>
