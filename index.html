@@ -1,54 +1,175 @@
-import turtle, colorsys, math
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blooming Rose Animation</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0b0f19;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
 
-t = turtle.Turtle()
-turtle.bgcolor("black")
-turtle.tracer(0)
-t.speed(0)
-h, a = 0, 0
+    .container {
+      position: relative;
+      width: 300px;
+      height: 400px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
 
-def draw():
-    global h, a
-    t.clear()
-    for i in range(120):
-        c = colorsys.hsv_to_rgb(h, 1, 1)
-        t.color(c)
-        t.penup()
-        t.goto(0, 0)
-        t.pendown()
-        x = math.sin(a + i) * 200
-        y = math.cos(a + i * 2) * 200
-        t.goto(x, y)
-        t.dot(15)
-        h += 0.0001
-    a += 0.05
-    turtle.ontimer(draw, 10)
+    /* ڈنڈی (Stem) */
+    .stem {
+      position: absolute;
+      bottom: 20px;
+      width: 8px;
+      height: 0;
+      background: linear-gradient(to top, #1b4d3e, #2e8b57);
+      border-radius: 4px;
+      animation: growStem 2s ease-in-out forwards;
+    }
 
-draw()
-turtle.done()
-import turtle, colorsys, math
+    @keyframes growStem {
+      to {
+        height: 220px;
+      }
+    }
 
-t = turtle.Turtle()
-turtle.bgcolor("black")
-turtle.tracer(0)
-t.speed(0)
-h, a = 0, 0
+    /* پتے (Leaves) */
+    .leaf {
+      position: absolute;
+      width: 40px;
+      height: 20px;
+      background: #2e8b57;
+      border-radius: 20px 0 20px 0;
+      opacity: 0;
+      transform: scale(0);
+    }
 
-def draw():
-    global h, a
-    t.clear()
-    for i in range(120):
-        c = colorsys.hsv_to_rgb(h, 1, 1)
-        t.color(c)
-        t.penup()
-        t.goto(0, 0)
-        t.pendown()
-        x = math.sin(a + i) * 200
-        y = math.cos(a + i * 2) * 200
-        t.goto(x, y)
-        t.dot(15)
-        h += 0.0001
-    a += 0.05
-    turtle.ontimer(draw, 10)
+    .leaf.left {
+      bottom: 100px;
+      left: 110px;
+      transform-origin: right center;
+      animation: bloomLeafLeft 1s ease-in-out 1.5s forwards;
+    }
 
-draw()
-turtle.done()
+    .leaf.right {
+      bottom: 140px;
+      right: 110px;
+      transform: scaleX(-1) scale(0);
+      transform-origin: left center;
+      animation: bloomLeafRight 1s ease-in-out 1.8s forwards;
+    }
+
+    @keyframes bloomLeafLeft {
+      to {
+        opacity: 1;
+        transform: rotate(-20deg) scale(1);
+      }
+    }
+
+    @keyframes bloomLeafRight {
+      to {
+        opacity: 1;
+        transform: scaleX(-1) rotate(-20deg) scale(1);
+      }
+    }
+
+    /* پھول (Rose Flower Container) */
+    .rose-petals {
+      position: absolute;
+      bottom: 230px;
+      width: 0;
+      height: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* پتیاں (Petals) */
+    .petal {
+      position: absolute;
+      width: 50px;
+      height: 70px;
+      background: linear-gradient(135deg, #ff2a5f, #b30000);
+      border-radius: 50px 50px 10px 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      opacity: 0;
+      transform-origin: bottom center;
+      animation: bloomPetal 2s cubic-bezier(0.4, 0, 0.2, 1) 2s forwards;
+    }
+
+    .petal:nth-child(1) { transform: rotate(0deg) scale(0); }
+    .petal:nth-child(2) { transform: rotate(45deg) scale(0); }
+    .petal:nth-child(3) { transform: rotate(90deg) scale(0); }
+    .petal:nth-child(4) { transform: rotate(135deg) scale(0); }
+    .petal:nth-child(5) { transform: rotate(180deg) scale(0); }
+    .petal:nth-child(6) { transform: rotate(225deg) scale(0); }
+    .petal:nth-child(7) { transform: rotate(270deg) scale(0); }
+    .petal:nth-child(8) { transform: rotate(315deg) scale(0); }
+
+    @keyframes bloomPetal {
+      0% {
+        opacity: 0;
+        transform: rotate(var(--angle)) scale(0);
+      }
+      50% {
+        opacity: 0.8;
+      }
+      100% {
+        opacity: 1;
+        transform: rotate(var(--angle)) translateY(-15px) scale(1);
+      }
+    }
+
+    /* پھول کا درمیانی حصہ (Center) */
+    .rose-center {
+      position: absolute;
+      bottom: 230px;
+      width: 25px;
+      height: 35px;
+      background: linear-gradient(to top, #900000, #ff4d6d);
+      border-radius: 50px;
+      opacity: 0;
+      transform: scale(0);
+      animation: centerBloom 1.5s ease-in-out 2.5s forwards;
+      z-index: 10;
+    }
+
+    @keyframes centerBloom {
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="stem"></div>
+    <div class="leaf left"></div>
+    <div class="leaf right"></div>
+    
+    <div class="rose-petals">
+      <div class="petal" style="--angle: 0deg;"></div>
+      <div class="petal" style="--angle: 45deg;"></div>
+      <div class="petal" style="--angle: 90deg;"></div>
+      <div class="petal" style="--angle: 135deg;"></div>
+      <div class="petal" style="--angle: 180deg;"></div>
+      <div class="petal" style="--angle: 225deg;"></div>
+      <div class="petal" style="--angle: 270deg;"></div>
+      <div class="petal" style="--angle: 315deg;"></div>
+    </div>
+    <div class="rose-center"></div>
+  </div>
+
+</body>
+</html>
