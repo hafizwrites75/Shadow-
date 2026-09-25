@@ -1,175 +1,134 @@
 <!DOCTYPE html>
 <html lang="ur">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blooming Rose Animation</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #0b0f19;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      overflow: hidden;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Butterfly Neon Animation</title>
+    <style>
+        /* پورا بیک گراؤنڈ بلیک رہے گا */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-    .container {
-      position: relative;
-      width: 300px;
-      height: 400px;
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-    }
-
-    /* ڈنڈی (Stem) */
-    .stem {
-      position: absolute;
-      bottom: 20px;
-      width: 8px;
-      height: 0;
-      background: linear-gradient(to top, #1b4d3e, #2e8b57);
-      border-radius: 4px;
-      animation: growStem 2s ease-in-out forwards;
-    }
-
-    @keyframes growStem {
-      to {
-        height: 220px;
-      }
-    }
-
-    /* پتے (Leaves) */
-    .leaf {
-      position: absolute;
-      width: 40px;
-      height: 20px;
-      background: #2e8b57;
-      border-radius: 20px 0 20px 0;
-      opacity: 0;
-      transform: scale(0);
-    }
-
-    .leaf.left {
-      bottom: 100px;
-      left: 110px;
-      transform-origin: right center;
-      animation: bloomLeafLeft 1s ease-in-out 1.5s forwards;
-    }
-
-    .leaf.right {
-      bottom: 140px;
-      right: 110px;
-      transform: scaleX(-1) scale(0);
-      transform-origin: left center;
-      animation: bloomLeafRight 1s ease-in-out 1.8s forwards;
-    }
-
-    @keyframes bloomLeafLeft {
-      to {
-        opacity: 1;
-        transform: rotate(-20deg) scale(1);
-      }
-    }
-
-    @keyframes bloomLeafRight {
-      to {
-        opacity: 1;
-        transform: scaleX(-1) rotate(-20deg) scale(1);
-      }
-    }
-
-    /* پھول (Rose Flower Container) */
-    .rose-petals {
-      position: absolute;
-      bottom: 230px;
-      width: 0;
-      height: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    /* پتیاں (Petals) */
-    .petal {
-      position: absolute;
-      width: 50px;
-      height: 70px;
-      background: linear-gradient(135deg, #ff2a5f, #b30000);
-      border-radius: 50px 50px 10px 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      opacity: 0;
-      transform-origin: bottom center;
-      animation: bloomPetal 2s cubic-bezier(0.4, 0, 0.2, 1) 2s forwards;
-    }
-
-    .petal:nth-child(1) { transform: rotate(0deg) scale(0); }
-    .petal:nth-child(2) { transform: rotate(45deg) scale(0); }
-    .petal:nth-child(3) { transform: rotate(90deg) scale(0); }
-    .petal:nth-child(4) { transform: rotate(135deg) scale(0); }
-    .petal:nth-child(5) { transform: rotate(180deg) scale(0); }
-    .petal:nth-child(6) { transform: rotate(225deg) scale(0); }
-    .petal:nth-child(7) { transform: rotate(270deg) scale(0); }
-    .petal:nth-child(8) { transform: rotate(315deg) scale(0); }
-
-    @keyframes bloomPetal {
-      0% {
-        opacity: 0;
-        transform: rotate(var(--angle)) scale(0);
-      }
-      50% {
-        opacity: 0.8;
-      }
-      100% {
-        opacity: 1;
-        transform: rotate(var(--angle)) translateY(-15px) scale(1);
-      }
-    }
-
-    /* پھول کا درمیانی حصہ (Center) */
-    .rose-center {
-      position: absolute;
-      bottom: 230px;
-      width: 25px;
-      height: 35px;
-      background: linear-gradient(to top, #900000, #ff4d6d);
-      border-radius: 50px;
-      opacity: 0;
-      transform: scale(0);
-      animation: centerBloom 1.5s ease-in-out 2.5s forwards;
-      z-index: 10;
-    }
-
-    @keyframes centerBloom {
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
-  </style>
+        canvas {
+            background-color: #000;
+            display: block;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="container">
-    <div class="stem"></div>
-    <div class="leaf left"></div>
-    <div class="leaf right"></div>
-    
-    <div class="rose-petals">
-      <div class="petal" style="--angle: 0deg;"></div>
-      <div class="petal" style="--angle: 45deg;"></div>
-      <div class="petal" style="--angle: 90deg;"></div>
-      <div class="petal" style="--angle: 135deg;"></div>
-      <div class="petal" style="--angle: 180deg;"></div>
-      <div class="petal" style="--angle: 225deg;"></div>
-      <div class="petal" style="--angle: 270deg;"></div>
-      <div class="petal" style="--angle: 315deg;"></div>
-    </div>
-    <div class="rose-center"></div>
-  </div>
+    <!-- کینوس جہاں اینیمیشن ڈرا ہوگی -->
+    <canvas id="butterflyCanvas"></canvas>
 
+    <script>
+        const canvas = document.getElementById('butterflyCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // کینوس کا سائز سیٹ کریں
+        canvas.width = 600;
+        canvas.height = 800;
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2 - 30;
+
+        // ویڈیو کے مطابق رنگوں کی لسٹ (RGB Format)
+        const colors = [
+            { r: 0, g: 210, b: 255 },   // فیروزی / Cyan
+            { r: 255, g: 20, b: 60 },   // سرخ / Red
+            { r: 0, g: 255, b: 120 },   // ہلکا ہرا / Neon Green
+            { r: 230, g: 0, b: 255 },   // جامنی / Purple
+            { r: 50, g: 50, b: 255 }    # نیلا / Blue
+        ];
+
+        let colorIndex = 0;
+        let colorTimer = 0;
+        const numPoints = 42; // نقطوں اور لائنوں کی تعداد
+        let t = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            t += 0.04;
+            colorTimer += 1;
+
+            // ہر 2.5 سیکنڈ بعد رنگ تبدیل ہوگا
+            if (colorTimer > 150) {
+                colorIndex = (colorIndex + 1) % colors.length;
+                colorTimer = 0;
+            }
+
+            const currentColor = colors[colorIndex];
+            const colorStr = `rgb(${currentColor.r}, ${currentColor.g}, ${currentColor.b})`;
+
+            // اسکرین کو ہر فریم میں صاف (Clear) کریں
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const points = [];
+
+            // تتلی کی شکل کا ریاضیاتی فارمولا (Butterfly Curve Formula)
+            for (let i = 0; i < numPoints; i++) {
+                const angle = (Math.PI * 2 / numPoints) * i;
+
+                // پروں کے پھیلنے اور سکڑنے کی حرکت (Pulse effect)
+                const pulse = Math.sin(t * 2) * 0.12 + 1.0;
+                const r = (Math.exp(Math.cos(angle)) - 2 * Math.cos(4 * angle) + Math.pow(Math.sin(angle / 12), 5)) * 65 * pulse;
+
+                const x = centerX + r * Math.sin(angle);
+                const y = centerY - r * Math.cos(angle);
+
+                points.push({ x, y });
+            }
+
+            // مرکز کے ہلنے کی حرکت
+            const centerPos = {
+                x: centerX,
+                y: centerY + Math.sin(t * 3) * 8
+            };
+
+            // 1. مرکز سے ہر نقطے تک لائنیں بنائیں (Glow Lines)
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = colorStr;
+            ctx.strokeStyle = colorStr;
+            ctx.lineWidth = 2;
+
+            for (let pt of points) {
+                ctx.beginPath();
+                ctx.moveTo(centerPos.x, centerPos.y);
+                ctx.lineTo(pt.x, pt.y);
+                ctx.stroke();
+            }
+
+            // 2. باہر کے چمکدار نقطے (Glow Dots) بنائیں
+            for (let pt of points) {
+                // چمکدار نینون اثر (Neon Glow)
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = colorStr;
+                ctx.fillStyle = colorStr;
+
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 3. مرکز کا سفید چمکدار نقطہ
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = '#ffffff';
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(centerPos.x, centerPos.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // اینیمیشن شروع کریں
+        animate();
+    </script>
 </body>
 </html>
