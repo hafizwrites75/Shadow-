@@ -1,134 +1,441 @@
 <!DOCTYPE html>
-<html lang="ur">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Butterfly Neon Animation</title>
+    <title>All-in-One Social & Photo Sharing App</title>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* پورا بیک گراؤنڈ بلیک رہے گا */
-        body {
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --primary-color: #4a90e2;
+            --accent-color: #e74c3c;
+            --border-color: #e0e0e0;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --primary-color: #377dff;
+            --border-color: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            background-color: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
             display: flex;
             justify-content: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Header */
+        header {
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            height: 100vh;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .theme-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Card Style */
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Upload Section */
+        .upload-section h3 {
+            margin-bottom: 12px;
+        }
+
+        .upload-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Photo Feed */
+        .feed {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .post-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
             overflow: hidden;
         }
 
-        canvas {
-            background-color: #000;
+        .post-header {
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #ccc;
+            object-fit: cover;
+        }
+
+        .post-user-info h4 {
+            font-size: 0.95rem;
+        }
+
+        .post-user-info span {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        .post-image {
+            width: 100%;
+            max-height: 450px;
+            object-fit: cover;
             display: block;
+        }
+
+        .post-caption {
+            padding: 12px;
+            font-size: 0.95rem;
+        }
+
+        .post-actions {
+            padding: 10px 12px;
+            display: flex;
+            gap: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action-btn.liked {
+            color: var(--accent-color);
+        }
+
+        /* Comment Section */
+        .comments-section {
+            padding: 12px;
+            background: rgba(0,0,0,0.02);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .comment-list {
+            list-style: none;
+            margin-bottom: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .comment-item {
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .comment-item strong {
+            margin-right: 5px;
+        }
+
+        .comment-input-box {
+            display: flex;
+            gap: 8px;
+        }
+
+        .comment-input-box input {
+            flex: 1;
+            padding: 8px;
+        }
+
+        .comment-input-box button {
+            padding: 8px 12px;
         }
     </style>
 </head>
 <body>
 
-    <!-- کینوس جہاں اینیمیشن ڈرا ہوگی -->
-    <canvas id="butterflyCanvas"></canvas>
+<div class="app-container">
+    <!-- Header -->
+    <header>
+        <h2><i class="fa-solid font-awesome"></i> SocialFeed</h2>
+        <button class="theme-btn" onclick="toggleTheme()" id="themeIcon">
+            <i class="fa-solid fa-moon"></i>
+        </button>
+    </header>
 
-    <script>
-        const canvas = document.getElementById('butterflyCanvas');
-        const ctx = canvas.getContext('2d');
+    <!-- User Profile Setup -->
+    <div class="card">
+        <h3>प्रोफाइल सेटिंग (Profile)</h3>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <input type="text" id="usernameInput" placeholder="अपना नाम लिखें..." value="User123">
+        </div>
+    </div>
 
-        // کینوس کا سائز سیٹ کریں
-        canvas.width = 600;
-        canvas.height = 800;
+    <!-- Upload Section -->
+    <div class="card upload-section">
+        <h3>नई फोटो शेयर करें (Public Post)</h3>
+        <div class="upload-controls">
+            <input type="file" id="imageInput" accept="image/*">
+            <input type="text" id="captionInput" placeholder="फोटो के बारे में कुछ लिखें...">
+            <button class="btn" onclick="uploadPost()"><i class="fa-solid fa-paper-plane"></i> अपलोड करें</button>
+        </div>
+    </div>
 
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2 - 30;
+    <!-- Live Public Feed -->
+    <div class="feed" id="publicFeed">
+        <!-- Live posts will appear here -->
+    </div>
+</div>
 
-        // ویڈیو کے مطابق رنگوں کی لسٹ (RGB Format)
-        const colors = [
-            { r: 0, g: 210, b: 255 },   // فیروزی / Cyan
-            { r: 255, g: 20, b: 60 },   // سرخ / Red
-            { r: 0, g: 255, b: 120 },   // ہلکا ہرا / Neon Green
-            { r: 230, g: 0, b: 255 },   // جامنی / Purple
-            { r: 50, g: 50, b: 255 }    # نیلا / Blue
-        ];
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-        let colorIndex = 0;
-        let colorTimer = 0;
-        const numPoints = 42; // نقطوں اور لائنوں کی تعداد
-        let t = 0;
+<script>
+    // 1. Firebase Config (अपनी Firebase की डिटेल्स यहाँ डालें)
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
 
-        function animate() {
-            requestAnimationFrame(animate);
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const postsRef = database.ref('global_posts');
 
-            t += 0.04;
-            colorTimer += 1;
+    // Theme Toggle Functionality
+    function toggleTheme() {
+        const body = document.body;
+        const themeIcon = document.getElementById('themeIcon');
+        if (body.getAttribute('data-theme') === 'dark') {
+            body.removeAttribute('data-theme');
+            themeIcon.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            themeIcon.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        }
+    }
 
-            // ہر 2.5 سیکنڈ بعد رنگ تبدیل ہوگا
-            if (colorTimer > 150) {
-                colorIndex = (colorIndex + 1) % colors.length;
-                colorTimer = 0;
-            }
+    // 2. Upload Post to Global Realtime Feed
+    function uploadPost() {
+        const username = document.getElementById('usernameInput').value.trim() || 'Anonymous';
+        const fileInput = document.getElementById('imageInput');
+        const caption = document.getElementById('captionInput').value.trim();
 
-            const currentColor = colors[colorIndex];
-            const colorStr = `rgb(${currentColor.r}, ${currentColor.g}, ${currentColor.b})`;
-
-            // اسکرین کو ہر فریم میں صاف (Clear) کریں
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const points = [];
-
-            // تتلی کی شکل کا ریاضیاتی فارمولا (Butterfly Curve Formula)
-            for (let i = 0; i < numPoints; i++) {
-                const angle = (Math.PI * 2 / numPoints) * i;
-
-                // پروں کے پھیلنے اور سکڑنے کی حرکت (Pulse effect)
-                const pulse = Math.sin(t * 2) * 0.12 + 1.0;
-                const r = (Math.exp(Math.cos(angle)) - 2 * Math.cos(4 * angle) + Math.pow(Math.sin(angle / 12), 5)) * 65 * pulse;
-
-                const x = centerX + r * Math.sin(angle);
-                const y = centerY - r * Math.cos(angle);
-
-                points.push({ x, y });
-            }
-
-            // مرکز کے ہلنے کی حرکت
-            const centerPos = {
-                x: centerX,
-                y: centerY + Math.sin(t * 3) * 8
-            };
-
-            // 1. مرکز سے ہر نقطے تک لائنیں بنائیں (Glow Lines)
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = colorStr;
-            ctx.strokeStyle = colorStr;
-            ctx.lineWidth = 2;
-
-            for (let pt of points) {
-                ctx.beginPath();
-                ctx.moveTo(centerPos.x, centerPos.y);
-                ctx.lineTo(pt.x, pt.y);
-                ctx.stroke();
-            }
-
-            // 2. باہر کے چمکدار نقطے (Glow Dots) بنائیں
-            for (let pt of points) {
-                // چمکدار نینون اثر (Neon Glow)
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = colorStr;
-                ctx.fillStyle = colorStr;
-
-                ctx.beginPath();
-                ctx.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // 3. مرکز کا سفید چمکدار نقطہ
-            ctx.shadowBlur = 12;
-            ctx.shadowColor = '#ffffff';
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(centerPos.x, centerPos.y, 5, 0, Math.PI * 2);
-            ctx.fill();
+        if (fileInput.files.length === 0) {
+            alert("कृपया पहले कोई फोटो चुनें!");
+            return;
         }
 
-        // اینیمیشن شروع کریں
-        animate();
-    </script>
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            const base64Image = e.target.result;
+
+            // Save to Firebase (Accessible to ALL users globally)
+            const newPostRef = postsRef.push();
+            newPostRef.set({
+                id: newPostRef.key,
+                username: username,
+                imageUrl: base64Image,
+                caption: caption,
+                likes: 0,
+                timestamp: Date.now()
+            });
+
+            // Clear Inputs
+            fileInput.value = '';
+            document.getElementById('captionInput').value = '';
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    // 3. Listen for Live Posts from Firebase Database
+    postsRef.on('value', (snapshot) => {
+        const feedContainer = document.getElementById('publicFeed');
+        feedContainer.innerHTML = ''; // Clear current feed
+
+        const posts = snapshot.val();
+        if (!posts) {
+            feedContainer.innerHTML = '<p style="text-align:center; opacity:0.6;">अभी तक कोई फोटो शेयर नहीं की गई है।</p>';
+            return;
+        }
+
+        // Convert object to array and reverse (Newest posts first)
+        const postList = Object.values(posts).reverse();
+
+        postList.forEach(post => {
+            const postElement = renderPostCard(post);
+            feedContainer.appendChild(postElement);
+        });
+    });
+
+    // 4. Render Post UI Card
+    function renderPostCard(post) {
+        const card = document.createElement('div');
+        card.className = 'post-card';
+
+        const formattedTime = new Date(post.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        card.innerHTML = `
+            <div class="post-header">
+                <img src="https://api.dicebear.com/6.x/bottts/svg?seed=${post.username}" class="user-avatar" alt="Avatar">
+                <div class="post-user-info">
+                    <h4>${escapeHtml(post.username)}</h4>
+                    <span>${formattedTime}</span>
+                </div>
+            </div>
+            <img src="${post.imageUrl}" class="post-image" alt="User Post">
+            ${post.caption ? `<div class="post-caption">${escapeHtml(post.caption)}</div>` : ''}
+            
+            <div class="post-actions">
+                <button class="action-btn" onclick="likePost('${post.id}', ${post.likes || 0})">
+                    <i class="fa-solid fa-heart"></i> <span>${post.likes || 0}</span>
+                </button>
+            </div>
+
+            <div class="comments-section">
+                <ul class="comment-list" id="comments-${post.id}">
+                    <!-- Comments loaded dynamically -->
+                </ul>
+                <div class="comment-input-box">
+                    <input type="text" id="input-${post.id}" placeholder="कमेंट करें...">
+                    <button class="btn" onclick="addComment('${post.id}')">भेजें</button>
+                </div>
+            </div>
+        `;
+
+        // Load comments for this post
+        loadComments(post.id);
+
+        return card;
+    }
+
+    // 5. Like Feature
+    function likePost(postId, currentLikes) {
+        database.ref('global_posts/' + postId).update({
+            likes: currentLikes + 1
+        });
+    }
+
+    // 6. Comments Feature
+    function addComment(postId) {
+        const username = document.getElementById('usernameInput').value.trim() || 'Anonymous';
+        const commentInput = document.getElementById(`input-${postId}`);
+        const text = commentInput.value.trim();
+
+        if (!text) return;
+
+        const commentRef = database.ref(`global_posts/${postId}/comments`).push();
+        commentRef.set({
+            username: username,
+            text: text
+        });
+
+        commentInput.value = '';
+    }
+
+    function loadComments(postId) {
+        database.ref(`global_posts/${postId}/comments`).on('value', (snapshot) => {
+            const commentListUI = document.getElementById(`comments-${postId}`);
+            if (!commentListUI) return;
+
+            commentListUI.innerHTML = '';
+            const comments = snapshot.val();
+
+            if (comments) {
+                Object.values(comments).forEach(c => {
+                    const li = document.createElement('li');
+                    li.className = 'comment-item';
+                    li.innerHTML = `<strong>${escapeHtml(c.username)}:</strong> ${escapeHtml(c.text)}`;
+                    commentListUI.appendChild(li);
+                });
+            }
+        });
+    }
+
+    // Security Helper to avoid XSS
+    function escapeHtml(text) {
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+</script>
+
 </body>
 </html>
